@@ -55,3 +55,14 @@ client.send_message({rule}, {number})
 ---
 
 ## VISCA
+- VISCA를 활용해 Tiny 2를 작동
+
+<br>
+
+- Tiny 2는 VISCA에서 지원되지 않거나 Sony 측에서 port를 차단한 것으로 보임
+
+<br>
+
+---
+
+## SDK
