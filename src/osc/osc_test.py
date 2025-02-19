@@ -36,21 +36,21 @@ while True:
         time.sleep(5)
          
         try:
-            app = Application(backend='uia').connect(title_re='OBSBOT*')
-            main_window = app.window(title_re='OBSBOT*')
-            main_window.wait('visible', timeout=10)
+            # app = Application(backend='uia').connect(title_re='OBSBOT*')
+            # main_window = app.window(title_re='OBSBOT*')
+            # main_window.wait('visible', timeout=10)
             # main_window.print_control_identifiers()
-            main_window.set_focus()
+            # main_window.set_focus()
             try:
-                preview_button = main_window.child_window(
-                    auto_id="WindowBasic.wBasic.wCentralWidget.swMain.pgMain.wMainPanel.wDevTitle.wToolBar.pbVideoPreview",
-                    control_type="CheckBox"
-                )
-                preview_button.wait('visible', timeout=10)
-                time.sleep(5)
+                # preview_button = main_window.child_window(
+                #     auto_id="WindowBasic.wBasic.wCentralWidget.swMain.pgMain.wMainPanel.wDevTitle.wToolBar.pbVideoPreview",
+                #     control_type="CheckBox"
+                # )
+                # preview_button.wait('visible', timeout=10)
+                # time.sleep(5)
                 client.send_message("/OBSBOT/WebCam/General/WakeSleep", 1)
                 # preview_button.click_input()
-                preview_button.click()
+                # preview_button.click()
                 print('비디오 실행')
             except Exception as e:
                 print(f'button exception: {e}')
@@ -86,3 +86,11 @@ while True:
         print('AI Mode: Hand Tracking Mode를 실행합니다.')
         client.send_message("/OBSBOT/WebCam/Tiny/SetAiMode", 8)
         time.sleep(2)
+        
+    if keyboard.is_pressed('7'):
+        print('Zoom을 0배로 수정합니다.')
+        client.send_message("/OBSBOT/WebCam/General/SetZoom", 0)
+        
+    if keyboard.is_pressed('8'):
+        print('Zoom을 2배로 수정합니다.')
+        client.send_message("/OBSBOT/WebCam/General/SetZoom", 50)

@@ -5,19 +5,19 @@
 
 <br>
 
-- library install
-```py
-# osc library install
-pip install python-osc
-# reference: https://pypi.org/project/python-osc/
-```
+  - library install
+  ```py
+  # osc library install
+  pip install python-osc
+  # reference: https://pypi.org/project/python-osc/
+  ```
 
 <br>
 
-```py
-# keyboard event library install
-pip install keyboard
-```
+    ```py
+    # keyboard event library install
+    pip install keyboard
+    ```
 
 <br>
 
@@ -33,22 +33,22 @@ pip install keyboard
 <br>
 
 - 설정 창에서 host와 수신 포트를 아래와 같이 작성하여 사용
-```py
-from pythonosc.udp_client improt SimpleUDPClient
+    ```py
+    from pythonosc.udp_client improt SimpleUDPClient
 
-ip = "127.0.0.1"
-port = {port_number}
+    ip = "127.0.0.1"
+    port = {port_number}
 
-client = SimpleUDPClient(ip, port)
-```
+    client = SimpleUDPClient(ip, port)
+    ```
 
 <br>
 
 - 아래와 같이 정해진 규칙에 따라 명령어를 보내는 것으로 Tiny 2를 컨트롤
-```py
-client.send_message({rule}, {number})
-# reference: https://www.obsbot.co.kr/kr/explore/obsbot-center/osc
-```
+    ```py
+    client.send_message({rule}, {number})
+    # reference: https://www.obsbot.co.kr/kr/explore/obsbot-center/osc
+    ```
 
 <br>
 
@@ -59,10 +59,78 @@ client.send_message({rule}, {number})
 
 <br>
 
-- Tiny 2는 VISCA에서 지원되지 않거나 Sony 측에서 port를 차단한 것으로 보임
+- Tiny 2는 VISCA에서 지원되지 않음.
 
 <br>
 
 ---
 
-## SDK
+## ultralytics YOLO
+- 라이브러리 설치
+  ```py
+    # Install the ultralytics package from PyPI
+    pip install ultralytics
+    # reference: https://docs.ultralytics.com/ko/modes/track/#why-choose-ultralytics-yolo-for-object-tracking
+  ```
+
+<br>
+
+- 테스트 코드
+  ```py
+    import cv2
+
+    from ultralytics import YOLO
+
+    # Load the YOLO11 model
+    # model을 선택할 수 있음(human-tracking은 yolo11n-pose.pt)
+    model = YOLO("yolo11n.pt")
+
+    # Open the video file
+    # 비디오를 선택하거나 카메라를 선택할 수 있음(경로를 지정해주거나, video_path 대신 장치 관리자의 순서대로 카메라를 지정할 수 있음(0, 1 등))
+    video_path = "path/to/video.mp4"
+    cap = cv2.VideoCapture(video_path)
+
+    # Loop through the video frames
+    while cap.isOpened():
+        # Read a frame from the video
+        success, frame = cap.read()
+        
+        # 생성되는 cv2의 frame 크기를 조정할 수 있음
+        # reframe = cv2.resize(frame, None, fx=3.2, fy=3.2, interpolation=cv2.INTER_AREA)
+
+        if success:
+            # Run YOLO11 tracking on the frame, persisting tracks between frames
+            # 아래와 같이 tracker와 출력 결과를 보지 않게 만들 수 있음
+            # results = model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False)
+            results = model.track(frame, persist=True)
+
+            # Visualize the results on the frame
+            annotated_frame = results[0].plot()
+
+            # Display the annotated frame
+            cv2.imshow("YOLO11 Tracking", annotated_frame)
+
+            # Break the loop if 'q' is pressed
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+        else:
+            # Break the loop if the end of the video is reached
+            break
+
+    # Release the video capture object and close the display window
+    cap.release()
+    cv2.destroyAllWindows()
+  ```
+
+<br>
+
+- ultralytic YOLO & OBSBOT OSC
+  - 카메라를 OBSBOT의 Tiny 2를 사용하고 기본적인 작동은 OSC를 활용
+  - ultralytic YOLO의 human model detection을 활용해서 BBox를 그림
+    - 카메라 움직임 수정 (ing)
+    - 추론 빈도 낮추기 (ing)
+    - 여러 개의 추론 결과를 queue 형태로 받아서 해당 queue의 평균으로 카메라 motor를 움직이도록 (ing)
+    - BBox의 confidence 값이 0.5 이상인 데이터만 show 되도록 수정 (`done`)
+    - 특정 구역에 진입했을 때, 손의 움직임을 sub window로 출력 (to do)
+    - 라우터를 통한 멀티 카메라 출력 (to do)
+    - etc...
