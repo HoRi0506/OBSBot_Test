@@ -6,11 +6,11 @@
 <br>
 
   - library install
-  ```py
-  # osc library install
-  pip install python-osc
-  # reference: https://pypi.org/project/python-osc/
-  ```
+    ```py
+    # osc library install
+    pip install python-osc
+    # reference: https://pypi.org/project/python-osc/
+    ```
 
 <br>
 
@@ -127,6 +127,7 @@
 - ultralytic YOLO & OBSBOT OSC
   - 카메라를 OBSBOT의 Tiny 2를 사용하고 기본적인 작동은 OSC를 활용
   - ultralytic YOLO의 human model detection을 활용해서 BBox를 그림
+    - 프로그램 시작 시 카메라 초기 세팅 설정 (`done`)
     - 카메라 움직임 수정 (ing)
     - 추론 빈도 낮추기 (ing)
     - 여러 개의 추론 결과를 queue 형태로 받아서 해당 queue의 평균으로 카메라 motor를 움직이도록 (ing)
