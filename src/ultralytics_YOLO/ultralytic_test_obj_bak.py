@@ -319,5 +319,3 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
-
-### z축 인식이 안됨

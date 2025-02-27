@@ -247,6 +247,8 @@ while cap.isOpened():
                     state_y = "stopped"
             last_command_time_y = current_time
 
+    # client.send_message("/OBSBOT/WebCam/General/SetZoom", 0)
+    client.send_message("/OBSBOT/WebCam/General/SetView", 0)
     annotated_frame = custom_plot(results, valid_indices, reframe)
     cv2.imshow("YOLO11 Tracking", annotated_frame)
 
