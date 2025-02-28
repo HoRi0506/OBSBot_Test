@@ -10,11 +10,7 @@
     # osc library install
     pip install python-osc
     # reference: https://pypi.org/project/python-osc/
-    ```
-
-<br>
-
-    ```py
+    
     # keyboard event library install
     pip install keyboard
     ```
@@ -125,13 +121,21 @@
 <br>
 
 - ultralytic YOLO & OBSBOT OSC
+
+  <br>
+
+  <b>TASK</b>
+
   - 카메라를 OBSBOT의 Tiny 2를 사용하고 기본적인 작동은 OSC를 활용
   - ultralytic YOLO의 human model detection을 활용해서 BBox를 그림
     - 프로그램 시작 시 카메라 초기 세팅 설정 (`done`)
-    - 카메라 움직임 수정 (ing)
-    - 추론 빈도 낮추기 (ing)
-    - 여러 개의 추론 결과를 queue 형태로 받아서 해당 queue의 평균으로 카메라 motor를 움직이도록 (ing)
-    - BBox의 confidence 값이 0.5 이상인 데이터만 show 되도록 수정 (`done`)
-    - 특정 구역에 진입했을 때, 손의 움직임을 sub window로 출력 (to do)
+      - 프로그램 실행 및 종료 시 로직 수정 (`done`)
+    - 카메라 움직임 수정 (fixing)
+    - 추론 빈도 낮추기 (`done`)
+    - 중심점을 맞추기 위해서 motor를 작동시킬 때, 어느 축이 중심에서 더 먼지 판단하여 더 먼 쪽부터 motor 이동 (`done`)
+    - 사람 객체의 스켈레톤의 중심점을 frame 단위로 수집. EMA 방식으로 최근 프레임에 가중치를 두어 motor를 작동 (ing)
+    - BBox의 confidence 값이 0.6 이상인 데이터만 show 되도록 수정 (`done`)
+    - 두 개의 ArUco marker를 통과했을 때, sub window로 출력 (fixing)
+      - ArUco marker 통과 후 객체의 스켈레톤 중 손목 부분을 확대 촬영 (to do)
     - 라우터를 통한 멀티 카메라 출력 (to do)
     - etc...

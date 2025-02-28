@@ -6,22 +6,26 @@ import numpy as np
 from pywinauto import Desktop
 from pythonosc.udp_client import SimpleUDPClient
 from ultralytics import YOLO
-import atexit  # 프로그램 종료 시 정리 작업을 위한 모듈 추가
-import psutil  # 프로세스 확인을 위한 모듈 추가
-import os  # 파일 경로 확인을 위한 모듈 추가
+import atexit
+import psutil
+import os
 
-# 정리 작업을 위한 함수 정의
 def cleanup_resources():
     global cap, client, pg
     print("정리 작업을 수행합니다...")
-        
-    # 카메라 리소스 해제
+    
+    if 'client' in globals() and client is not None:
+        try:
+            client.send_message("/OBSBOT/WebCam/General/ResetGimbal", 0)
+            time.sleep(1)
+            client.send_message("/OBSBOT/WebCam/General/WakeSleep", 0)
+        except Exception as e:
+            print(f"OBSBOT 명령 전송 실패: {e}")
+    
     if 'cap' in globals() and cap is not None:
         cap.release()
         
-    # 미리보기 창 닫기 - 창이 존재하는지 먼저 확인
     try:
-        # 창이 존재하는지 확인하는 함수
         def window_exists(title_pattern):
             try:
                 windows = Desktop(backend="uia").windows()
@@ -32,7 +36,6 @@ def cleanup_resources():
             except:
                 return False
         
-        # 창이 존재하는 경우에만 닫기 시도
         if window_exists(["Preview", "미리보기", "OBSBOT_M"]):
             preview_win = Desktop(backend="uia").window(title_re=".*(Preview|미리보기|OBSBOT_M).*")
             preview_win.close()
@@ -42,33 +45,16 @@ def cleanup_resources():
     except Exception as e:
         print(f"미리보기 창 처리 중 오류: {e}")
     
-    # OBSBOT 명령 전송
-    if 'client' in globals() and client is not None:
-        try:
-            client.send_message("/OBSBOT/WebCam/General/ResetGimbal", 0)
-            time.sleep(1)
-            client.send_message("/OBSBOT/WebCam/General/WakeSleep", 0)
-        except Exception as e:
-            print(f"OBSBOT 명령 전송 실패: {e}")
-    
-    # 프로세스 종료
     if 'pg' in globals() and pg is not None:
         try:
             pg.terminate()
         except Exception as e:
             print(f"프로세스 종료 실패: {e}")
     
-    # OpenCV 창 닫기
     cv2.destroyAllWindows()
     print('프로그램이 안전하게 종료되었습니다.')
 
 def custom_plot(results, valid_indices, img):
-    """
-    valid_indices에 해당하는 detection만 사용하여,
-    - bounding box (내부 좌측 상단에 id와 conf 텍스트 포함),
-    - 17개 keypoint를 원으로 표시,
-    - keypoints를 연결하는 skeleton 선을 그립니다.
-    """
     annotated = img.copy()
     boxes = results[0].boxes
     keypoints = results[0].keypoints
@@ -87,7 +73,7 @@ def custom_plot(results, valid_indices, img):
     ]
     
     for i in valid_indices:
-        xyxy = boxes.xyxy[i].cpu().numpy().astype(int)  # [x1, y1, x2, y2]
+        xyxy = boxes.xyxy[i].cpu().numpy().astype(int)
         cv2.rectangle(annotated, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (255, 0, 0), 4)
 
         id_val = boxes.id[i].item() if boxes.id is not None else -1
@@ -96,7 +82,7 @@ def custom_plot(results, valid_indices, img):
         cv2.putText(annotated, text, (xyxy[0]+5, xyxy[1]+40),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 4)
 
-        kp = keypoints.xy[i].cpu().numpy().astype(int)  # shape: (17, 2)
+        kp = keypoints.xy[i].cpu().numpy().astype(int)
         for point in kp:
             if point[0] != 0 or point[1] != 0:
                 cv2.circle(annotated, (point[0], point[1]), 3, (0, 255, 0), 3)
@@ -115,15 +101,14 @@ def kill_process_by_name(name):
     except Exception as ex:
         print(f"프로세스 종료 중 오류 발생: {ex}")
 
-# Load model
+# ---------------------------
+#       메인 설정 시작
+# ---------------------------
 model = YOLO("yolo11n-pose.pt")
 
-# ArUco 마커 검출을 위한 dictionary, 파라미터 생성
 aruco_dict_4x4 = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 aruco_dict_original = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 aruco_params = cv2.aruco.DetectorParameters()
-
-# 마커 검출 성능 향상을 위한 파라미터 조정
 aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
 aruco_params.adaptiveThreshWinSizeMin = 3
 aruco_params.adaptiveThreshWinSizeMax = 23
@@ -153,106 +138,110 @@ client.send_message("/OBSBOT/WebCam/General/WakeSleep", 1)
 time.sleep(1)
 client.send_message("/OBSBOT/WebCam/General/ResetGimbal", 0)
 time.sleep(1)
-# client.send_message("/OBSBOT/WebCam/General/SetZoom", 0)
 client.send_message("/OBSBOT/WebCam/General/SetZoomMin", 0)
-# time.sleep(1)
-# client.send_message("/OBSBOT/WebCam/Tiny/SetTrackingMode", 1)
 time.sleep(1)
 client.send_message("/OBSBOT/WebCam/General/SetAutoWhiteBalance", 1)
 time.sleep(1)
 client.send_message("/OBSBOT/WebCam/Tiny/SetAiMode", 0)
 print("비디오 실행")
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)  # Windows의 경우 DirectShow 사용 예시
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1792)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1344)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+default_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+default_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+scale_factor = 3
+new_width = int(default_width * scale_factor)
+new_height = int(default_height * scale_factor)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, new_width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, new_height)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 cap.set(cv2.CAP_PROP_FPS, 30)
 
 command_delay = 0.2
-margin_offset_x = 10  # 객체 중앙 인식 범위의 x축 margin
-margin_offset_y = 20  # 객체 중앙 인식 범위의 y축 margin
+margin_offset_x = 5
+margin_offset_y = 5
 motor_speed_factor = 0.5
 
-# 연속 이동에 따른 이동량 감쇠를 위한 변수들
-consecutive_x_moves = 0
-consecutive_y_moves = 0
-last_direction_x = None
-last_direction_y = None
-decay_factor = 0.7  # 연속 이동 시 이동량을 줄여줄 감쇠 계수 (0 < decay_factor < 1)
-
-# ArUco 마커 검출 관련 변수
 aruco_detected = False
 aruco_detection_count = 0
-aruco_detection_threshold = 1  # 즉시 인식
-
-# 마커 위치 추적을 위한 변수
-marker_positions = {0: None, 1: None}  # 마커 ID를 키로 하는 위치 딕셔너리
-person_in_gate = False  # 사람이 마커 사이에 있는지 여부
-gate_frame = None  # 사람이 마커 사이를 지나갈 때의 프레임
-show_gate_frame = False  # 서브윈도우 표시 여부
-gate_frame_time = 0  # 서브윈도우 표시 시작 시간
-gate_display_duration = 5  # 서브윈도우 표시 지속 시간(초)
+aruco_detection_threshold = 1
+marker_positions = {0: None, 1: None}
+person_in_gate = False
+gate_frame = None
+show_gate_frame = False
+gate_frame_time = 0
+gate_display_duration = 5
 
 skip_frame = 2
 frame_counter = 0
 last_results = None
 
-center_x_queue = collections.deque(maxlen=10)
-center_y_queue = collections.deque(maxlen=10)
+# EMA를 위한 변수
+ema_obj_center_x = None
+ema_obj_center_y = None
 
-# detection persistence (debounce) 시간 (초)
 detection_timeout = 1.5
 last_valid_detection_time = time.time()
-
 reset_sent = False
+just_reset = False
 
-state_x = "stopped"
-state_y = "stopped"
+# motor 명령 간 지연 체크용 시간
 last_command_time_x = time.time()
 last_command_time_y = time.time()
+
+# 같은 프레임에서 바로 stop을 보내지 않기 위해,
+# move를 보냈는지 여부를 임시로 저장
+move_sent_x = False
+move_sent_y = False
+
+def is_valid_pt(pt):
+    return (pt[0] != 0 or pt[1] != 0)
 
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
         client.send_message("/OBSBOT/WebCam/General/ResetGimbal", 0)
-        time.sleep(2)
+        time.sleep(0.3)
         client.send_message("/OBSBOT/WebCam/General/WakeSleep", 0)
         try:
             preview_win = Desktop(backend="uia").window(title_re=".*(Preview|미리보기|OBSBOT_M).*")
             preview_win.close()
-        except Exception as e:
+        except:
             pass
         pg.terminate()
         print('프로그램을 종료합니다.')
         break
 
-    reframe = cv2.resize(frame, None, fx=1.0, fy=1.0, interpolation=cv2.INTER_AREA)
+    reframe = frame.copy()
 
     if frame_counter % skip_frame == 0:
         results = model.track(reframe, persist=True, tracker="bytetrack.yaml", verbose=False)
         last_results = results
     else:
-        results = last_results if last_results is not None else model.track(reframe, persist=True, tracker="bytetrack.yaml", verbose=False)
-        last_results = results
+        if last_results is None:
+            results = model.track(reframe, persist=True, tracker="bytetrack.yaml", verbose=False)
+            last_results = results
+        else:
+            results = last_results
     frame_counter += 1
 
     confs = results[0].boxes.conf
     valid_indices = [i for i, conf in enumerate(confs) if conf.item() >= 0.6]
-
     current_time = time.time()
+
+    # 1) 객체 없으면 Reset
     if len(valid_indices) == 0 or results[0].boxes.id is None:
-        # 트래킹하는 사람이 없을 경우
         if current_time - last_valid_detection_time < detection_timeout:
             cv2.imshow("YOLO11 Tracking", reframe)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
             continue
+
         if not reset_sent:
             client.send_message("/OBSBOT/WebCam/General/ResetGimbal", 0)
             time.sleep(0.3)
-            client.send_message("/OBSBOT/WebCam/General/SetGimMotorDegree", [40, 0, -20])  # 속도, 좌우, 상하
+            client.send_message("/OBSBOT/WebCam/General/SetGimMotorDegree", [40, 0, -20])
             reset_sent = True
+            just_reset = True
         cv2.imshow("YOLO11 Tracking", reframe)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
@@ -261,171 +250,152 @@ while cap.isOpened():
         last_valid_detection_time = current_time
         reset_sent = False
 
-    # 객체가 있을 때 처리
+    if just_reset:
+        # EMA 변수 초기화
+        ema_obj_center_x = None
+        ema_obj_center_y = None
+        last_command_time_x = current_time - command_delay
+        last_command_time_y = current_time - command_delay
+        just_reset = False
+
     ids = results[0].boxes.id
     valid_ids = [ids[i].item() for i in valid_indices]
     try:
         min_id = min(valid_ids)
         min_idx = valid_ids.index(min_id)
-            
         x1, y1, x2, y2 = [round(float(v), 4) for v in results[0].boxes.xyxy[valid_indices[min_idx]]]
-    except Exception as e:
-        client.send_message("/OBSBOT/WebCam/General/ResetGimbal", 0)
-        time.sleep(0.3)
-        client.send_message("/OBSBOT/WebCam/General/SetGimMotorDegree", [40, 0, -20])
+    except:
         cv2.imshow("YOLO11 Tracking", reframe)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
         continue
 
-    left_eyes_y = results[0].keypoints.xy[ valid_indices[min_idx] ][1][1]
-    right_eyes_y = results[0].keypoints.xy[ valid_indices[min_idx] ][2][1]
-    left_body_y = results[0].keypoints.xy[ valid_indices[min_idx] ][11][1]
-    right_body_y = results[0].keypoints.xy[ valid_indices[min_idx] ][12][1]
-    
-    # 객체 중앙값
-    obj_center_x = (x1 + x2) / 2.0
-    obj_center_y = (y1 + y2) / 2.0
+    # 스켈레톤 5,6,11,12 -> 4점, 아니면 BBox 사용
+    keyp = results[0].keypoints.xy[ valid_indices[min_idx] ].cpu().numpy().astype(int)
+    s5 = keyp[5]
+    s6 = keyp[6]
+    s11 = keyp[11]
+    s12 = keyp[12]
 
-    # 큐에 넣어서 평균값 사용
-    center_x_queue.append(obj_center_x)
-    center_y_queue.append(obj_center_y)
-    avg_obj_center_x = np.mean(center_x_queue)
-    avg_obj_center_y = np.mean(center_y_queue)
+    if is_valid_pt(s5) and is_valid_pt(s6) and is_valid_pt(s11) and is_valid_pt(s12):
+        arr = np.array([s5, s6, s11, s12], dtype=float)
+        center_x = np.mean(arr[:, 0])
+        center_y = np.mean(arr[:, 1])
+    else:
+        center_x = (x1 + x2) / 2.0
+        center_y = (y1 + y2) / 2.0
 
-    # 윈도우 중앙값
-    frame_height, frame_width = reframe.shape[:2]
-    frame_center_x = frame_width / 2.0
-    frame_center_y = frame_height / 2.0
+    # 윈도우 크기와 중앙 계산
+    frame_h, frame_w = reframe.shape[:2]
+    center_wx = frame_w / 2.0
+    center_wy = frame_h / 2.0
 
-    # 객체 중앙 인식 범위
-    obj_center_min_x = avg_obj_center_x - margin_offset_x
-    obj_center_max_x = avg_obj_center_x + margin_offset_x
-    obj_center_min_y = avg_obj_center_y - margin_offset_y
-    obj_center_max_y = avg_obj_center_y + margin_offset_y
+    # EMA 기반 스무딩 적용 (α=0.75, 오차가 100 이상이면 바로 현재 좌표 사용)
+    alpha = 0.75
+    error_threshold = 100
+    if ema_obj_center_x is None or ema_obj_center_y is None:
+        ema_obj_center_x = center_x
+        ema_obj_center_y = center_y
+    else:
+        if abs(center_x - center_wx) > error_threshold:
+            ema_obj_center_x = center_x
+        else:
+            ema_obj_center_x = alpha * center_x + (1 - alpha) * ema_obj_center_x
+        if abs(center_y - center_wy) > error_threshold:
+            ema_obj_center_y = center_y
+        else:
+            ema_obj_center_y = alpha * center_y + (1 - alpha) * ema_obj_center_y
 
-    # 윈도우 중앙이 객체 중앙 범위 안에 있는지 체크
-    x_in_range = obj_center_min_x <= frame_center_x <= obj_center_max_x
-    y_in_range = obj_center_min_y <= frame_center_y <= obj_center_max_y
+    avg_obj_center_x = ema_obj_center_x
+    avg_obj_center_y = ema_obj_center_y
+
+    # 윈도우 중앙 시각화(십자선)
+    cv2.line(reframe, (int(center_wx), 0), (int(center_wx), frame_h), (0, 255, 255), 2)
+    cv2.line(reframe, (0, int(center_wy)), (frame_w, int(center_wy)), (0, 255, 255), 2)
+
+    # margin 범위
+    obj_min_y = avg_obj_center_y - margin_offset_y
+    obj_max_y = avg_obj_center_y + margin_offset_y
+    obj_min_x = avg_obj_center_x - margin_offset_x
+    obj_max_x = avg_obj_center_x + margin_offset_x
+
+    y_in_range = (obj_min_y <= center_wy <= obj_max_y)
+    x_in_range = (obj_min_x <= center_wx <= obj_max_x)
 
     # 오차 계산
-    error_x = avg_obj_center_x - frame_center_x
-    error_y = avg_obj_center_y - frame_center_y
+    error_y = avg_obj_center_y - center_wy
+    error_x = avg_obj_center_x - center_wx
     abs_error_x = abs(error_x)
     abs_error_y = abs(error_y)
 
-    # -----------------------------
-    # 1) X축 vs Y축 중 더 큰 오차를 먼저 보정
-    # -----------------------------
-    if abs_error_x > abs_error_y:
-        # 우선 X축 처리
-        if state_y == "moving":
-            # Y축 움직임 중이었다면 정지
-            client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", 0)
-            client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", 0)
-            state_y = "stopped"
+    # -------------------------------------------
+    # 우선순위에 따라 한 축씩 이동시키기
+    # -------------------------------------------
+    move_sent_x = False
+    move_sent_y = False
 
-        if current_time - last_command_time_x > command_delay:
-            if not x_in_range:
-                # ---------------------------
-                # (A) 연속 이동 감쇠 로직
-                # ---------------------------
-                direction_x = "right" if (error_x > 0) else "left"
-                
-                # 연속 방향 체크
-                if direction_x == last_direction_x:
-                    consecutive_x_moves += 1
-                else:
-                    consecutive_x_moves = 1
-                    last_direction_x = direction_x
-                
-                # 이동량 = 기본계수 × 오차 × (감쇠계수 ^ (연속횟수-1))
-                move_amount_x = abs_error_x * motor_speed_factor * (decay_factor ** (consecutive_x_moves - 1))
-                
-                # 실제 모터 명령
-                if error_x > 0:  # 객체가 윈도우 중앙보다 오른쪽
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalRight", move_amount_x)
-                else:            # 객체가 윈도우 중앙보다 왼쪽
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalLeft", move_amount_x)
-
-                state_x = "moving"
+    if abs_error_y >= abs_error_x:
+        # y축 오차가 더 크므로 먼저 y축 이동
+        if not y_in_range and (current_time - last_command_time_y) >= command_delay:
+            half_dist_y = abs_error_y / 2.0
+            move_amount_y = half_dist_y * motor_speed_factor
+            if error_y > 0:
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", move_amount_y)
             else:
-                # 범위 안이면 정지 명령
-                if state_x == "moving":
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalRight", 0)
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalLeft", 0)
-                state_x = "stopped"
-
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", move_amount_y)
+            move_sent_y = True
+            last_command_time_y = current_time
+        # y축이 보정된 후, x축 이동
+        elif y_in_range and not x_in_range and (current_time - last_command_time_x) >= command_delay:
+            half_dist_x = abs_error_x / 2.0
+            move_amount_x = half_dist_x * motor_speed_factor
+            if error_x > 0:
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalRight", move_amount_x)
+            else:
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalLeft", move_amount_x)
+            move_sent_x = True
             last_command_time_x = current_time
-
     else:
-        # Y축 처리
-        if state_x == "moving":
-            # X축 움직임 중이었다면 정지
-            client.send_message("/OBSBOT/WebCam/General/SetGimbalRight", 0)
-            client.send_message("/OBSBOT/WebCam/General/SetGimbalLeft", 0)
-            state_x = "stopped"
-
-        if current_time - last_command_time_y > command_delay:
-            if not y_in_range:
-                # ---------------------------
-                # (A) 연속 이동 감쇠 로직
-                # ---------------------------
-                direction_y = "down" if (error_y > 0) else "up"
-                
-                # 연속 방향 체크
-                if direction_y == last_direction_y:
-                    consecutive_y_moves += 1
-                else:
-                    consecutive_y_moves = 1
-                    last_direction_y = direction_y
-
-                # 이동량 = 기본계수 × 오차 × (감쇠계수 ^ (연속횟수-1))
-                move_amount_y = abs_error_y * motor_speed_factor * (decay_factor ** (consecutive_y_moves - 1))
-
-                # 실제 모터 명령
-                if error_y > 0:  # 객체가 윈도우 중앙보다 아래
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", move_amount_y)
-                else:            # 객체가 윈도우 중앙보다 위
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", move_amount_y)
-
-                state_y = "moving"
-            
-            # 사람 객체 skeleton에서 몸체 하단이 보이지 않을 때 보정
-            elif left_body_y <= 0 or right_body_y <= 0:
-                # 눈이 보이긴 하는데 몸이 제대로 안 잡혔을 경우
-                direction_y = "up" if (left_eyes_y > 0 or right_eyes_y > 0) else "down"
-                
-                # 연속 방향 체크
-                if direction_y == last_direction_y:
-                    consecutive_y_moves += 1
-                else:
-                    consecutive_y_moves = 1
-                    last_direction_y = direction_y
-
-                move_amount_y = abs_error_y * motor_speed_factor * (decay_factor ** (consecutive_y_moves - 1))
-
-                if direction_y == "up":
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", move_amount_y)
-                else:
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", move_amount_y)
-
-                state_y = "moving"
+        # x축 오차가 더 크므로 먼저 x축 이동
+        if not x_in_range and (current_time - last_command_time_x) >= command_delay:
+            half_dist_x = abs_error_x / 2.0
+            move_amount_x = half_dist_x * motor_speed_factor
+            if error_x > 0:
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalRight", move_amount_x)
             else:
-                # 범위 안이면 정지
-                if state_y == "moving":
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", 0)
-                    client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", 0)
-                state_y = "stopped"
-
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalLeft", move_amount_x)
+            move_sent_x = True
+            last_command_time_x = current_time
+        # x축이 보정된 후, y축 이동
+        elif x_in_range and not y_in_range and (current_time - last_command_time_y) >= command_delay:
+            half_dist_y = abs_error_y / 2.0
+            move_amount_y = half_dist_y * motor_speed_factor
+            if error_y > 0:
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", move_amount_y)
+            else:
+                client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", move_amount_y)
+            move_sent_y = True
             last_command_time_y = current_time
 
-    # 시각화
-    annotated_frame = custom_plot(results, valid_indices, reframe)
+    # -------------------------------------------
+    # Motor 정지 명령: 이동하지 않은 축에 대해 보내기
+    # -------------------------------------------
+    if (current_time - last_command_time_y) >= command_delay:
+        if y_in_range and (not move_sent_y):
+            client.send_message("/OBSBOT/WebCam/General/SetGimbalDown", 0)
+            client.send_message("/OBSBOT/WebCam/General/SetGimbalUp", 0)
+            last_command_time_y = current_time
 
-    # ----- [추가 기능] ArUco Marker 인식 -----
-    marker_positions = {0: None, 1: None}
-    
+    if (current_time - last_command_time_x) >= command_delay:
+        if x_in_range and (not move_sent_x):
+            client.send_message("/OBSBOT/WebCam/General/SetGimbalRight", 0)
+            client.send_message("/OBSBOT/WebCam/General/SetGimbalLeft", 0)
+            last_command_time_x = current_time
+
+    # -------------------------------------------
+    # 시각화 & ArUco 로직
+    # -------------------------------------------
+    annotated_frame = custom_plot(results, valid_indices, reframe)
     detector_4x4 = cv2.aruco.ArucoDetector(aruco_dict_4x4, aruco_params)
     detector_original = cv2.aruco.ArucoDetector(aruco_dict_original, aruco_params)
     
@@ -438,21 +408,15 @@ while cap.isOpened():
         if aruco_detection_count >= aruco_detection_threshold:
             aruco_detected = True
             annotated_frame = cv2.aruco.drawDetectedMarkers(annotated_frame, aruco_corners, aruco_ids)
-            
             for i, corner in enumerate(aruco_corners):
-                corners = corner.reshape((4, 2))
-                corners = corners.astype(int)
-                
+                corners = corner.reshape((4, 2)).astype(int)
                 x_min = np.min(corners[:, 0])
                 y_min = np.min(corners[:, 1])
                 x_max = np.max(corners[:, 0])
                 y_max = np.max(corners[:, 1])
-                
                 marker_center_x = (x_min + x_max) // 2
                 marker_center_y = (y_min + y_max) // 2
-                
                 marker_id = int(aruco_ids[i][0])
-                
                 if marker_id in [0, 1]:
                     marker_positions[marker_id] = (marker_center_x, marker_center_y)
                 
@@ -481,16 +445,13 @@ while cap.isOpened():
             person_center_x = (x1 + x2) / 2.0
             person_center_y = (y1 + y2) / 2.0
             
-            marker_distance = np.sqrt((marker_positions[1][0] - marker_positions[0][0])**2 + 
+            marker_distance = np.sqrt((marker_positions[1][0] - marker_positions[0][0])**2 +
                                       (marker_positions[1][1] - marker_positions[0][1])**2)
             
-            person_to_gate_distance = np.sqrt((person_center_x - gate_center_x)**2 + 
+            person_to_gate_distance = np.sqrt((person_center_x - gate_center_x)**2 +
                                               (person_center_y - gate_center_y)**2)
-            
             gate_threshold = marker_distance * 0.3
-            
             current_person_in_gate = person_to_gate_distance < gate_threshold
-            
             if current_person_in_gate and not person_in_gate:
                 gate_frame = annotated_frame.copy()
                 show_gate_frame = True
@@ -498,9 +459,9 @@ while cap.isOpened():
                 print("사람이 게이트를 통과했습니다!")
             
             person_in_gate = current_person_in_gate
-            cv2.line(annotated_frame, 
-                     (int(person_center_x), int(person_center_y)), 
-                     (gate_center_x, gate_center_y), 
+            cv2.line(annotated_frame,
+                     (int(person_center_x), int(person_center_y)),
+                     (gate_center_x, gate_center_y),
                      (255, 255, 0), 2)
     
     if show_gate_frame:
@@ -512,7 +473,7 @@ while cap.isOpened():
                 cv2.destroyWindow("Gate Passage")
             except:
                 pass
-    
+
     cv2.imshow("YOLO11 Tracking", annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
