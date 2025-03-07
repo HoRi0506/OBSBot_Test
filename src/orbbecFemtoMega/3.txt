@@ -1,0 +1,148 @@
+아래 코드는 카메라 컬러 스트림이 MJPEG로 들어올 때 발생하는 `ValueError: cannot reshape array ...` 오류를 해결한 예시입니다. 기존 코드는 비압축 RGB888 형태로 데이터를 받아들이므로 오류가 났습니다. 따라서 두 가지 방식 중 하나를 적용해야 합니다:
+
+1. **OpenCV `imdecode()`를 이용해 MJPEG를 디코딩**.
+2. Orbbec Python SDK의 `Config`를 통해 컬러 스트림 포맷을 `OB_FORMAT_RGB888`로 설정.
+
+아래는 **imdecode 버전**으로 수정한 코드 예시입니다. (주석 추가)
+
+---
+```python
+import cv2
+import numpy as np
+import sys
+sys.path.append("C:/project/pyorbbecsdk/install/lib")
+import pyorbbecsdk
+
+###############################
+# 1) Pipeline 생성 및 시작
+###############################
+pipeline = pyorbbecsdk.Pipeline()
+
+# 그냥 pipeline.start() 하면 기본 값인 MJPEG + Y16 (컬러/뎁스)로 시작함.
+pipeline.start()
+
+try:
+    while True:
+        #########################
+        # 2) 프레임 수신
+        #########################
+        frames = pipeline.wait_for_frames(100)
+        if frames is None:
+            continue
+        color_frame = frames.get_color_frame()
+        depth_frame = frames.get_depth_frame()
+        if color_frame is None or depth_frame is None:
+            continue
+
+        #########################
+        # 3) 컬러 프레임 디코딩
+        #    MJPEG → BGR
+        #########################
+        # color_frame.get_data()는 MJPEG 바이너리 스트림.
+        color_data = np.frombuffer(color_frame.get_data(), dtype=np.uint8)
+        color_img = cv2.imdecode(color_data, cv2.IMREAD_COLOR)
+        # imdecode 실패 시 None일 수도 있으므로 검사
+        if color_img is None:
+            continue
+
+        #########################
+        # 4) 뎁스 프레임 처리
+        #########################
+        w_d, h_d = depth_frame.get_width(), depth_frame.get_height()
+        depth_data = np.frombuffer(depth_frame.get_data(), dtype=np.uint16)
+        depth_map = depth_data.reshape((h_d, w_d))
+
+        depth_vis = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+        depth_vis = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
+
+        #########################
+        # 5) 화면 표시
+        #########################
+        cv2.imshow("Orbbec Color", color_img)
+        cv2.imshow("Orbbec Depth", depth_vis)
+
+        # ESC 누르면 종료
+        if cv2.waitKey(1) == 27:
+            break
+finally:
+    pipeline.stop()
+    cv2.destroyAllWindows()
+```
+
+**이 코드로 실행하면**, MJPEG 압축 포맷으로 들어오는 컬러 데이터를 OpenCV가 디코딩해 `(H×W×3)` 형태의 BGR 이미지로 얻을 수 있습니다. `reshape()`를 쓰지 않기 때문에 `ValueError`가 발생하지 않고, 정상적으로 화면에 컬러와 뎁스 영상을 보여줄 수 있습니다.
+
+---
+## 대안: 비압축 RGB 포맷으로 스트림 설정
+
+만약 소프트웨어 디코딩 오버헤드를 피하고 싶다면, 아래처럼 Orbbec SDK의 `Config`를 통해 `OB_FORMAT_RGB888` 같은 비압축 포맷을 잡아줄 수 있습니다:
+
+```python
+import cv2
+import numpy as np
+import pyorbbecsdk
+
+pipeline = pyorbbecsdk.Pipeline()
+config = pyorbbecsdk.Config()
+
+# 컬러 프로필 중 width=1920, height=1080, fps=30, format=OB_FORMAT_RGB888을 찾는다
+color_profiles = pipeline.getStreamProfileList(pyorbbecsdk.OB_SENSOR_COLOR)
+for prof in color_profiles:
+    if (prof.width == 1920 and prof.height == 1080 and
+        prof.format == pyorbbecsdk.OB_FORMAT_RGB888 and
+        prof.fps == 30):
+        config.enable_stream(prof)
+        break
+
+# 뎁스 프로필(Y16, 640x576, 15FPS 등 적절히 찾는다)
+depth_profiles = pipeline.getStreamProfileList(pyorbbecsdk.OB_SENSOR_DEPTH)
+for prof in depth_profiles:
+    if (prof.width == 640 and prof.height == 576 and
+        prof.format == pyorbbecsdk.OB_FORMAT_Y16 and
+        prof.fps == 15):
+        config.enable_stream(prof)
+        break
+
+pipeline.start(config)
+
+try:
+    while True:
+        frames = pipeline.wait_for_frames(100)
+        if frames is None:
+            continue
+        color_frame = frames.get_color_frame()
+        depth_frame = frames.get_depth_frame()
+        if color_frame is None or depth_frame is None:
+            continue
+
+        w, h = color_frame.get_width(), color_frame.get_height()
+        # 이제 color_frame 데이터는 비압축 RGB888 (w*h*3 bytes)
+        color_data = np.frombuffer(color_frame.get_data(), dtype=np.uint8)
+        color_img = color_data.reshape((h, w, 3))  # 직접 reshape 가능
+
+        # 뎁스
+        w_d, h_d = depth_frame.get_width(), depth_frame.get_height()
+        depth_data = np.frombuffer(depth_frame.get_data(), dtype=np.uint16)
+        depth_map = depth_data.reshape((h_d, w_d))
+        depth_vis = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+        depth_vis = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
+
+        cv2.imshow("Orbbec Color", color_img)
+        cv2.imshow("Orbbec Depth", depth_vis)
+        if cv2.waitKey(1) == 27:
+            break
+finally:
+    pipeline.stop()
+    cv2.destroyAllWindows()
+```
+
+이렇게 하면 MJPEG 디코딩 없이 바로 `(h, w, 3)` 형태로 받을 수 있습니다. 다만 USB 대역폭이 더 소모되어, 고해상도에서 FPS가 낮아지거나 끊길 수 있으므로 주의하세요.
+
+---
+## 결론
+
+- **오류 원인**: Femto Mega에서 기본 컬러 스트림이 MJPEG 압축 형태.
+- **수정 방법**: (1) `imdecode()`를 통해 MJPEG를 디코딩하거나, (2) 스트림 포맷을 `RGB888` 등 비압축으로 설정.
+- 위 코드 예시를 적용하면 `ValueError: cannot reshape array ...` 문제 없이 정상 동작합니다.
+
+이렇게 코드를 수정해주시면, 더 이상 reshape 오류가 발생하지 않고 컬러/뎁스 스트림을 정상적으로 시각화할 수 있을 것입니다.
+

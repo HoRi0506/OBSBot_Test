@@ -1,0 +1,139 @@
+아래는 추가 상황을 고려한 최종 가이드입니다. 현재 `.pyd` 파일 위치가 `C:/project/pyorbbecsdk/install/lib/pyorbbecsdk.cp312-win_amd64.pyd`이고, Python 스크립트(`femtomega_test.py`)가 `C:/project/orbbecFemtoMega/`에 있다는 점을 중점으로 설명을 보완했습니다.
+
+---
+# Orbbec Femto Mega Windows 활용 (pyorbbecsdk 경로 문제 해결 포함)
+
+## 0. 상황 요약
+
+- **.pyd 파일 위치**: `C:/project/pyorbbecsdk/install/lib/pyorbbecsdk.cp312-win_amd64.pyd` (이미 `cmake --install .` 후 생성).
+- **파이썬 스크립트**: `C:/project/orbbecFemtoMega/femtomega_test.py` 에서 `import pyorbbecsdk`를 실행하려고 함.
+- **문제**: `pyorbbecsdk` 모듈을 찾을 수 없다는 에러가 발생.
+
+이 원인은 Python이 `.pyd` 파일이 위치한 `C:/project/pyorbbecsdk/install/lib/`를 **모듈 검색 경로**로 인식하지 않기 때문입니다. 아래 해법 중 하나를 적용해야 합니다.
+
+---
+## 1. 가장 권장되는 해결 방법: CMAKE_INSTALL_PREFIX를 가상환경 site-packages로 지정
+
+pyorbbecsdk를 사용하는 파이썬 가상환경이 있다고 가정하겠습니다. (예: `C:/project/pyorbbecsdk/venv`)
+
+1. **가상환경 활성화** (VS Code 터미널 또는 PowerShell 등)
+   ```powershell
+   cd C:/project/pyorbbecsdk
+   .\venv\Scripts\activate
+   ```
+2. **(필요 시) build 폴더 삭제 후 재생성**
+   ```powershell
+   rmdir /s /q build
+   mkdir build
+   cd build
+   ```
+3. **CMake Configure 시, `-DCMAKE_INSTALL_PREFIX`를 venv site-packages로 지정**
+   ```powershell
+   cmake -DCMAKE_INSTALL_PREFIX="C:/project/pyorbbecsdk/venv/Lib/site-packages" -Dpybind11_DIR=... ..
+   cmake --build . --config Release
+   cmake --install .
+   ```
+4. **결과 확인**
+   - `C:/project/pyorbbecsdk/venv/Lib/site-packages/` 안에 `pyorbbecsdk.cpXXX-win_amd64.pyd` 파일이 생겨야 함.
+   - 이제 같은 가상환경에서 어느 디렉토리에서든 `import pyorbbecsdk` 가능.
+   - 따라서 `C:/project/orbbecFemtoMega/femtomega_test.py`를 실행해도 문제가 없어집니다:
+     ```powershell
+     cd C:/project/orbbecFemtoMega
+     python femtomega_test.py
+     ```
+
+> **주의**: 이 방법을 쓰면, 매번 빌드 후 설치할 때마다 pyd가 자동으로 site-packages로 들어가므로 추가 복사 과정이 필요 없습니다.
+
+---
+## 2. 수동 복사로 해결하기
+
+이미 `install/lib` 폴더 안에 .pyd가 만들어졌다면, 다음처럼 **직접** site-packages 폴더로 복사해도 됩니다.
+
+1. **가상환경 site-packages 경로 찾기**
+   ```powershell
+   python -c "import site; print(site.getsitepackages())"
+   # 혹은
+   python -m site
+   ```
+   일반적으로 `C:/project/pyorbbecsdk/venv/Lib/site-packages` 형태일 것입니다.
+
+2. **.pyd 파일 복사**
+   ```powershell
+   copy C:/project/pyorbbecsdk/install/lib/pyorbbecsdk.cp312-win_amd64.pyd C:/project/pyorbbecsdk/venv/Lib/site-packages/
+   ```
+3. **Python 실행**
+   ```powershell
+   cd C:/project/orbbecFemtoMega
+   python femtomega_test.py
+   ```
+   - 이제 `pyorbbecsdk` 모듈을 찾을 수 있을 것입니다.
+
+> 이 방법은 매번 re-build & re-install 후 .pyd가 갱신될 때마다 수동 복사를 해야 하므로 번거로울 수 있습니다.
+
+---
+## 3. PYTHONPATH로 해결하기 (임시)
+
+코드 수정 없이, `PYTHONPATH` 환경 변수나 `sys.path.append`로 `C:/project/pyorbbecsdk/install/lib`를 Python 모듈 경로에 추가할 수 있습니다.
+
+### 3.1 실행 시 환경 변수 지정
+
+Windows PowerShell 예시:
+```powershell
+$env:PYTHONPATH="C:/project/pyorbbecsdk/install/lib"
+python C:/project/orbbecFemtoMega/femtomega_test.py
+```
+
+이렇게 하면 Python 실행 시 `C:/project/pyorbbecsdk/install/lib`가 import 경로에 추가됩니다.
+
+### 3.2 소스 코드 내부에서 sys.path.append
+```python
+import sys
+sys.path.append("C:/project/pyorbbecsdk/install/lib")
+import pyorbbecsdk
+
+# ...이하 로직...
+```
+
+> 임시 방편일 뿐, 깔끔한 솔루션은 아니므로 개인 프로젝트 등에서만 쓰는 것을 권장합니다.
+
+---
+## 4. femtomega_test.py 실행 흐름
+
+다음은 권장 시나리오입니다:
+
+1. **CMAKE_INSTALL_PREFIX를 site-packages로 잡고 빌드·설치**해서 `.pyd`가 자동으로 가상환경에 들어가도록 함.
+2. **가상환경 활성화**: VS Code 하단에 `(venv)`가 표시되고 `python --version`이 가상환경의 파이썬을 가리키도록.
+3. **femtomega_test.py 실행**:
+   ```powershell
+   cd C:/project/orbbecFemtoMega
+   python femtomega_test.py
+   ```
+   - `import pyorbbecsdk`가 정상 동작하며, 카메라 스트리밍 시도가 이루어짐.
+
+만약 카메라 연결에 문제가 없다면, OpenCV 창에 컬러·뎁스 영상이 표시될 것입니다.
+
+---
+## 5. 자주 묻는 추가 사항
+
+1. **pyorbbecsdk가 site-packages에 들어갔는데도 DLL 오류**가 나면?
+   - `OrbbecSDK.dll`이나 `depthengine_2_0.dll` 등이 PATH에 없을 수 있습니다. `C:/Program Files/Orbbec/OrbbecSDK/bin` 같은 폴더를 PATH에 추가하거나, DLL 파일을 파이썬 실행 경로에 복사해주세요.
+
+2. **femtomega_test.py에서 import는 되지만, 카메라가 인식 안 됨**
+   - USB 3.0 포트, 케이블 교체, Orbbec Viewer로 테스트 필요.
+
+3. **다른 PC나 다른 폴더로 옮길 때**
+   - .pyd 파일 위치, DLL 위치 등을 다시 설정해줘야 할 수 있습니다.
+
+---
+## 6. 최종 요약
+
+- 현재 `.pyd` 위치: `C:/project/pyorbbecsdk/install/lib/pyorbbecsdk.cp312-win_amd64.pyd`
+- 원하는 Python 스크립트: `C:/project/orbbecFemtoMega/femtomega_test.py`
+- **해결책**: `.pyd`가 파이썬이 찾을 수 있는 경로에 있어야 함. 가장 간단한 방법은 빌드 시 `CMAKE_INSTALL_PREFIX`를 가상환경의 `site-packages`로 지정하거나, 수동 복사로 `.pyd`를 `site-packages` 안에 두는 것.
+- 이후 `python femtomega_test.py`를 실행하면 `import pyorbbecsdk`가 정상 작동.
+- 추가로, Orbbec DLL(예: `OrbbecSDK.dll`)이 PATH에 있거나 실행 폴더에 있어야 로드 에러 없이 카메라를 사용할 수 있습니다.
+
+이 과정을 따르면, `pyorbbecsdk` 모듈이 없는 문제를 해결하고, `femtomega_test.py`가 원하는대로 동작할 것입니다.
+
+**끝**
+

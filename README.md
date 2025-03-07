@@ -1,10 +1,14 @@
-# OBSBOT Tracking System
-
-이 프로젝트는 OBSBOT Tiny 2 카메라와 YOLO 객체 추적 기술을 결합하여 고급 카메라 추적 시스템을 구현합니다.
+# 카메라 추적 및 3D 이미징 시스템
 
 <br>
 
-<h2>📚 설치 및 종속성</h2>
+## OBSBOT Tracking System
+
+OBSBOT Tiny 2 카메라와 YOLO 객체 추적 기술을 결합하여 고급 카메라 추적 시스템을 구현합니다.
+
+<br>
+
+<h3>📚 설치 및 종속성</h3>
 
 <details>
 <summary>setup</summary>
@@ -30,7 +34,7 @@ pip install opencv-python
 
 <br>
 
-<h2>🔄 OSC 설정 방법</h2>
+<h3>🔄 OSC 설정 방법</h3>
 
 <details>
 <summary>OBSBOT setup</summary>
@@ -80,7 +84,7 @@ reference: [OBSBOT OSC 명령어 참조](https://www.obsbot.co.kr/kr/explore/obs
 
 <br>
 
-<h2>🤖 Ultralytics YOLO</h2>
+<h3>🤖 Ultralytics YOLO</h3>
 
 <details>
 <summary>Ultralytics YOLO demo setup</summary>
@@ -132,7 +136,18 @@ cv2.destroyAllWindows()
 
 <br>
 
-<h2>📁 테스트 코드</h2>
+<h3>🔧 VISCA 지원 상태</h3>
+
+<details>
+<summary>OBSBOT VISCA Setting</summary>
+
+현재 OBSBOT Tiny 2는 VISCA 프로토콜을 지원하지 않습니다. 대신 OSC 프로토콜을 통해 제어가 가능합니다.
+
+</details>
+
+<br>
+
+<h3>📁 OBSBOT 테스트 코드</h3>
 
 <details>
 
@@ -198,12 +213,227 @@ cv2.destroyAllWindows()
 
 </details>
 
+<details>
+<summary>ultralytic_hand_tracking.py</summary>
+
+### 주요 기능
+- 손 추적 및 제스처 인식
+- 손목 위치 기반 확대 촬영
+- 스켈레톤 포인트 분석
+
+### 주요 구성 요소
+1. **손 감지 및 추적**
+   - 손목 키포인트 추출
+   - 제스처 패턴 인식
+
+2. **카메라 제어**
+   - 손 위치 기반 줌 제어
+   - 제스처 기반 명령 실행
+
+</details>
+
 <br>
 
-<h2>🎯 프로젝트 진행 상황</h2>
+## Orbbec 3D 이미징 시스템
+
+Orbbec Femto Mega 카메라를 활용한 3D 포인트 클라우드 처리 및 깊이 이미지 분석 시스템입니다.
+
+<br>
+
+<h3>📚 설치 및 종속성</h3>
 
 <details>
-<summary>asd</summary>
+<summary>setup</summary>
+
+### 필요 라이브러리
+
+```bash
+# Orbbec SDK 관련 라이브러리
+pip install open3d
+pip install pyorbbecsdk
+
+# 이미지 처리용 라이브러리
+pip install opencv-python
+pip install numpy
+```
+
+### 필요 하드웨어
+- Orbbec Femto Mega 카메라
+- USB 3.0 연결이 가능한 컴퓨터
+
+### Orbbec SDK 설치 및 설정 과정
+
+#### 1. SDK 다운로드 및 설치
+1. [OrbbecSDK_v2 GitHub](https://github.com/orbbec/OrbbecSDK_v2) 또는 [릴리즈 페이지](https://github.com/orbbec/OrbbecSDK_v2/releases)에서 Windows용 SDK 패키지 다운로드
+2. 다운로드한 `.exe` 파일을 실행하여 설치 (기본 경로: `C:\Program Files\Orbbec\OrbbecSDK`)
+3. 또는 `.zip` 파일을 원하는 경로에 압축 해제
+
+#### 2. 환경 변수 설정
+- Orbbec SDK의 `bin` 폴더를 시스템 PATH에 추가
+  ```
+  시스템 속성 > 고급 > 환경 변수 > Path에 추가:
+  C:\Program Files\Orbbec\OrbbecSDK\bin
+  ```
+- 이는 Python에서 `.dll` 파일을 찾을 수 있도록 하기 위함
+
+#### 3. Python SDK (pyorbbecsdk) 설치
+1. **개발 환경 준비**
+   - Python 3.6 이상
+   - CMake 설치 ([CMake 공식 웹사이트](https://cmake.org/download/))
+   - Visual Studio 설치 (Desktop development with C++ 포함)
+
+2. **pyorbbecsdk 빌드 및 설치**
+   ```bash
+   # pyorbbecsdk 저장소 클론
+   git clone https://github.com/orbbec/pyorbbecsdk
+   cd pyorbbecsdk
+   
+   # 가상환경 생성 및 활성화
+   python -m venv ./venv
+   .\venv\Scripts\activate  # Windows PowerShell
+   
+   # 필요 패키지 설치
+   pip install -r requirements.txt
+   
+   # 빌드 디렉토리 생성 및 이동
+   mkdir build
+   cd build
+   
+   # CMake 구성
+   cmake -Dpybind11_DIR=$(pybind11-config --cmakedir) ..
+   
+   # 빌드 및 설치
+   cmake --build . --config Release
+   cmake --install .
+   ```
+
+3. **설치 확인**
+   - 설치 후 `site-packages` 디렉토리에 `pyorbbecsdk.cp3XX-win_amd64.pyd` 파일이 생성되어야 함(혹은 유사한)
+   - 가상환경의 site-packages 경로는 일반적으로 `venv/Lib/site-packages`
+
+#### 4. 일반적인 문제 해결
+1. **모듈을 찾을 수 없는 경우**
+   - `.pyd` 파일이 Python의 검색 경로에 있는지 확인
+   - 다음 방법 중 하나로 해결:
+     - `CMAKE_INSTALL_PREFIX`를 가상환경의 site-packages로 지정하여 재빌드
+     - `.pyd` 파일을 수동으로 site-packages 디렉토리에 복사
+     - `PYTHONPATH` 환경변수에 `.pyd` 파일 경로 추가
+
+2. **DLL 오류 발생 시**
+   - `OrbbecSDK.dll` 또는 `depthengine_2_0.dll` 등이 PATH에 있는지 확인
+   - 필요시 DLL 파일을 Python 실행 경로에 복사
+
+#### 5. 카메라 연결
+- USB 3.0 포트에 Femto Mega 카메라 연결
+- 별도 드라이버 없이 Windows에서 UVC 카메라로 인식됨
+- Orbbec Viewer(`tools` 폴더)로 카메라 연결 테스트 가능
+
+</details>
+
+<br>
+
+<h3>📁 Orbbec 테스트 코드</h3>
+
+<details>
+<summary>c_d_p.py (컬러, 깊이, 포인트 클라우드)</summary>
+
+### 주요 기능
+- 컬러, 깊이, 포인트 클라우드 처리
+- Open3D 기반 3D 시각화
+- 깊이 기반 색상화
+
+### 주요 구성 요소
+1. **데이터 처리**
+   - 깊이 맵 처리
+   - 포인트 클라우드 생성
+   - 다운샘플링 및 필터링
+
+2. **시각화**
+   - 3D 포인트 클라우드 렌더링
+   - 깊이 기반 색상 매핑
+   - 실시간 뷰 업데이트
+
+</details>
+
+<details>
+<summary>color_depth.py</summary>
+
+### 주요 기능
+- 컬러 및 깊이 이미지 동시 처리
+- 깊이 정보 시각화
+- 컬러-깊이 정렬
+
+### 주요 구성 요소
+1. **이미지 처리**
+   - 깊이 맵 컬러화
+   - 컬러-깊이 이미지 동기화
+
+2. **시각화**
+   - 깊이 정보 히트맵 표시
+   - 실시간 이미지 표시
+
+</details>
+
+<details>
+<summary>orbbec_official_pointcloud.py</summary>
+
+### 주요 기능
+- Orbbec 공식 SDK 기반 포인트 클라우드 생성
+- 고성능 포인트 클라우드 처리
+- GPU 가속 지원
+
+### 주요 구성 요소
+1. **데이터 처리**
+   - SDK 기반 포인트 클라우드 생성
+   - 고성능 필터링
+
+2. **시각화**
+   - 포인트 클라우드 렌더링
+   - 실시간 뷰 제어
+
+</details>
+
+<br>
+
+## 프로젝트 공통 정보
+
+<br>
+
+<h3>📁 프로젝트 구조</h3>
+
+<details>
+<summary>디렉토리 구조</summary>
+
+```
+OBSBOT_Test/
+├── src/
+│   ├── orbbecFemtoMega/        # Orbbec Femto Mega 카메라 관련 코드
+│   │   ├── c_d_p.py            # 컬러, 깊이, 포인트 클라우드 처리
+│   │   ├── color_depth.py      # 컬러 및 깊이 이미지 처리
+│   │   └── orbbec_official_pointcloud.py  # 공식 포인트 클라우드 처리
+│   │
+│   ├── osc/                    # OSC 프로토콜 관련 코드
+│   │   └── osc_test.py         # OSC 테스트 및 기본 기능
+│   │
+│   ├── ultralytics_YOLO/       # YOLO 객체 감지 및 추적 관련 코드
+│   │   ├── ultralytic_hand_tracking.py    # 손 추적 구현
+│   │   ├── ultralytic_human_tracking.py   # 인체 추적 구현
+│   │   ├── ultralytic_test_normal.py      # 기본 테스트 코드
+│   │   ├── ultralytic_test_obj.py         # 객체 추적 메인 코드
+│   │   └── yolo11n-pose.pt                # 포즈 추정 모델 파일
+│   │
+│   └── visca/                  # VISCA 프로토콜 관련 코드
+│       └── visca_test.py       # VISCA 테스트 코드
+```
+
+</details>
+
+<br>
+
+<h3>🎯 프로젝트 진행 상황</h3>
+
+<details>
+<summary>진행 상황</summary>
 
 ### 완료된 작업 ✅
 - [X] 프로그램 시작 시 카메라 초기 세팅 설정
@@ -211,30 +441,24 @@ cv2.destroyAllWindows()
 - [X] 추론 빈도 최적화
 - [X] 중심에서 더 먼 축 우선 모터 이동 구현
 - [X] BBox의 confidence 값 0.6 이상 필터링
+- [X] EMA 방식으로 최근 프레임에 가중치를 두어 모터 작동
+- [X] 특수 키 입력 시 화면 확대 후 손목 부분을 crop하여 촬영
+- [X] 카메라 움직임 안정성 개선
 
 ### 진행 중인 작업 🔄
-- 카메라 움직임 개선
-- EMA 방식으로 최근 프레임에 가중치를 두어 모터 작동
-- 두 개의 ArUco 마커 통과 감지 및 서브 윈도우 출력
+- Orbbec Femto Mega, OBSBOT 카메라 통합 및 기능 통합
+- Orbbec Femto Mega color, depth, pointcloud를 viewer와 유사하게 출력되도록 수정
+- Orbbec Femto Mega program 실행 시 최적화 작업
 
 ### 예정된 작업 📋
-- ArUco 마커 통과 후 객체 스켈레톤 중 손목 부분 확대 촬영
 - 라우터를 통한 멀티 카메라 출력 구현
+- Orbbec Femto Mega color, depth, pointcloud를 C or C++로 구현
 
 </details>
 
 <br>
 
-<h2>🔧 VISCA 지원 상태</h2>
-
-<details>
-<summary>OBSBOT VISCA Setting</summary>
-
-현재 OBSBOT Tiny 2는 VISCA 프로토콜을 지원하지 않습니다. 대신 OSC 프로토콜을 통해 제어가 가능합니다.
-
-</details>
-
-<h2>📝 참고 자료</h2>
+<h3>📝 참고 자료</h3>
 
 <details>
 <summary>references</summary>
@@ -242,5 +466,7 @@ cv2.destroyAllWindows()
 - [OBSBOT OSC 명령어 참조](https://www.obsbot.co.kr/kr/explore/obsbot-center/osc)
 - [Ultralytics YOLO 문서](https://docs.ultralytics.com/ko/modes/track/#why-choose-ultralytics-yolo-for-object-tracking)
 - [Python-OSC 라이브러리](https://pypi.org/project/python-osc/)
+- [Open3D 문서](http://www.open3d.org/docs/release/)
+- [Orbbec SDK 문서](https://orbbec3d.com/index/download.html)
 
 </details>
