@@ -529,35 +529,6 @@ python src/orbbecFemtoMega/orbbec_official_pointcloud.py
 
 <h3>📁 프로젝트 구조</h3>
 
-<details>
-<summary>디렉토리 구조</summary>
-
-```
-OBSBOT_Test/
-├── src/
-│   ├── orbbecFemtoMega/        # Orbbec Femto Mega 카메라 관련 코드
-│   │   ├── c_d_p.py            # 컬러, 깊이, 포인트 클라우드 처리
-│   │   ├── color_depth.py      # 컬러 및 깊이 이미지 처리
-│   │   └── orbbec_official_pointcloud.py  # 공식 포인트 클라우드 처리
-│   │
-│   ├── osc/                    # OSC 프로토콜 관련 코드
-│   │   └── osc_test.py         # OSC 테스트 및 기본 기능
-│   │
-│   ├── ultralytics_YOLO/       # YOLO 객체 감지 및 추적 관련 코드
-│   │   ├── ultralytic_hand_tracking.py    # 손 추적 구현
-│   │   ├── ultralytic_human_tracking.py   # 인체 추적 구현
-│   │   ├── ultralytic_test_normal.py      # 기본 테스트 코드
-│   │   ├── ultralytic_test_obj.py         # 객체 추적 메인 코드
-│   │   └── yolo11n-pose.pt                # 포즈 추정 모델 파일
-│   │
-│   └── visca/                  # VISCA 프로토콜 관련 코드
-│       └── visca_test.py       # VISCA 테스트 코드
-```
-
-</details>
-
-<br>
-
 <h3>🎯 프로젝트 진행 상황</h3>
 
 <details>
@@ -591,6 +562,228 @@ OBSBOT_Test/
 
 <br>
 
+## C++ Orbbec SDK 구현
+
+Orbbec Femto Mega 카메라의 3D 이미징 기능을 C++로 구현하여 보다 높은 성능과 안정성을 제공합니다.
+
+<br>
+
+<h3>📚 C++ 설치 및 종속성</h3>
+
+<details>
+<summary>설치 및 빌드 방법</summary>
+
+### 필수 종속성
+- CMake (3.10 이상)
+- Visual Studio 2019 이상 (C++ 개발 환경)
+- Orbbec SDK (2.x 이상)
+- OpenCV 4.x
+- Open3D
+
+### Orbbec SDK 설치
+1. [Orbbec 개발자 포털](https://developer.orbbec.com/download.html)에서 Orbbec SDK 다운로드
+2. SDK 설치 및 환경 변수 설정 (경로: `C:\Program Files\Orbbec\OrbbecSDK`)
+
+### Open3D 설치
+1. 공식 [Open3D GitHub](https://github.com/isl-org/Open3D) 참조
+2. 바이너리 또는 소스에서 빌드 가능
+
+### OpenCV 설치
+1. [OpenCV 공식 사이트](https://opencv.org/releases/) 에서 다운로드
+2. 또는 vcpkg를 통한 설치: `vcpkg install opencv:x64-windows`
+
+### 빌드 방법
+```bash
+# 빌드 디렉토리 생성
+mkdir build
+cd build
+
+# CMake 구성
+cmake ..
+
+# 빌드
+cmake --build . --config Release
+```
+
+</details>
+
+<br>
+
+<h3>🛠️ C++ 구현 주요 기능</h3>
+
+<details>
+<summary>기능 및 구성 요소</summary>
+
+### 주요 기능
+- Femto Mega 카메라의 컬러 및 깊이 스트림 실시간 처리
+- 깊이 데이터 기반 3D 포인트 클라우드 생성
+- YOLO 포즈 추정 통합
+- 스켈레톤 추적 및 3D 시각화
+
+### 주요 구성 요소
+1. **카메라 초기화 및 설정**
+   - 스트림 모드 및 해상도 설정
+   - 깊이 필터 및 노출 설정
+
+2. **프레임 처리**
+   - 컬러 및 깊이 프레임 동기화
+   - 깊이 정보 기반 컬러 이미지 정렬
+
+3. **포인트 클라우드 처리**
+   - 깊이 데이터 기반 3D 포인트 생성
+   - Open3D 기반 시각화
+
+4. **YOLO 포즈 추정**
+   - 인체 포즈 키포인트 추출
+   - 3D 공간상의 스켈레톤 시각화
+
+</details>
+
+<br>
+
+<h3>🔍 C++ 문제 해결</h3>
+
+<details>
+<summary>일반적인 문제 및 해결 방법</summary>
+
+### "Debug Error! abort() has been called" 오류
+- **원인**: Orbbec SDK DLL 파일들이 실행 파일과 같은 디렉토리에 없을 때 발생
+- **해결 방법**: 
+  1. `CMakeLists.txt` 파일에 post-build 명령어 추가하여 필요한 DLL 파일 자동 복사
+  ```cmake
+  # DLL 파일 복사 명령어 예시
+  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${ORBBEC_SDK_PATH}/bin" $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+  ```
+  2. 수동으로 필요한 DLL 파일을 실행 파일 디렉토리로 복사:
+     - OrbbecSDK.dll
+     - depthengine_2_0.dll
+     - k4a.dll
+     - k4arecord.dll
+     - ob_usb.dll
+     - 기타 필요한 종속성 DLL 파일들
+
+### 카메라 연결 문제
+- USB 3.0 포트에 직접 연결 (허브 사용 지양)
+- 다른 USB 케이블로 교체 시도
+- OrbbecViewer 도구로 카메라 연결 테스트
+
+### 빌드 오류
+- CMake 캐시 초기화 후 재빌드
+- 모든 종속성 경로가 올바르게 설정되었는지 확인
+- Visual Studio를 관리자 권한으로 실행
+
+</details>
+
+<br>
+
+<h3>📁 C++ 코드 구조</h3>
+
+<details>
+<summary>파일 및 기능</summary>
+
+```
+cpp_orbbec/
+├── CMakeLists.txt           # 빌드 구성 파일
+├── src/
+│   ├── main.cpp             # 메인 애플리케이션 코드
+│   └── ...                  # 기타 소스 파일
+├── include/
+│   └── ...                  # 헤더 파일
+└── build/                   # 빌드 출력 디렉토리
+    ├── Release/             # 릴리스 빌드
+    │   ├── cpp_orbbec.exe   # 실행 파일
+    │   ├── OrbbecSDK.dll    # Orbbec SDK DLL
+    │   └── ...              # 기타 DLL 파일
+    └── Debug/               # 디버그 빌드
+        ├── cpp_orbbec.exe
+        └── ...
+```
+
+### 주요 코드 설명
+- **main.cpp**: 카메라 초기화, 프레임 처리, 포인트 클라우드 생성 및 시각화, YOLO 포즈 추정 통합
+- **CMakeLists.txt**: 프로젝트 빌드 구성, 종속성 설정, DLL 복사 명령어
+
+</details>
+
+<br>
+
+<h3>📁 프로젝트 구조</h3>
+
+<details>
+<summary>디렉토리 구조</summary>
+
+```
+OBSBOT_Test/
+├── src/
+│   ├── cpp_orbbec/           # C++ Orbbec SDK 구현
+│   │   ├── src/
+│   │   │   └── main.cpp      # 메인 C++ 애플리케이션
+│   │   ├── include/          # 헤더 파일
+│   │   ├── CMakeLists.txt    # C++ 빌드 구성
+│   │   └── build/            # 빌드 출력 디렉토리
+│   │
+│   ├── orbbecFemtoMega/      # Python Orbbec 구현
+│   │   ├── c_d_p.py          # 컬러, 깊이, 포인트 클라우드 처리
+│   │   ├── color_depth.py    # 컬러 및 깊이 이미지 처리
+│   │   └── orbbec_official_pointcloud.py  # 공식 포인트 클라우드 처리
+│   │
+│   ├── osc/                  # OSC 프로토콜 관련 코드
+│   │   └── osc_test.py       # OSC 테스트 및 기본 기능
+│   │
+│   ├── ultralytics_YOLO/     # YOLO 객체 감지 및 추적 관련 코드
+│   │   ├── ultralytic_hand_tracking.py    # 손 추적 구현
+│   │   ├── ultralytic_human_tracking.py   # 인체 추적 구현
+│   │   ├── ultralytic_test_normal.py      # 기본 테스트 코드
+│   │   ├── ultralytic_test_obj.py         # 객체 추적 메인 코드
+│   │   ├── convert_pt_to_onnx.py          # PT를 ONNX로 변환
+│   │   └── yolo11n-pose.pt               # 포즈 추정 모델 파일
+│   │
+│   └── visca/                # VISCA 프로토콜 관련 코드
+│       └── visca_test.py     # VISCA 테스트 코드
+│
+├── build/                    # C++ 빌드 출력
+│   └── Debug/                # 디버그 빌드 파일
+│
+└── README.md                 # 프로젝트 문서
+```
+
+</details>
+
+<br>
+
+<h3>🎯 프로젝트 진행 상황</h3>
+
+<details>
+<summary>진행 상황</summary>
+
+### 완료된 작업 ✅
+- [X] Orbbec Femto Mega 카메라 컬러 및 깊이 스트림 구현
+- [X] 깊이 정보 기반 포인트 클라우드 생성 및 시각화
+- [X] Open3D를 활용한 3D 시각화 인터페이스 구현
+- [X] 바닥 그리드 추가 및 시각화 개선
+- [X] C++ Orbbec SDK 통합 및 빌드 환경 구성
+- [X] C++ 애플리케이션에서 발생한 "Debug Error! abort()" 문제 해결
+- [X] YOLO 포즈 추정 C++ 통합
+
+### 진행 중인 작업 🔄
+- Orbbec Femto Mega, OBSBOT 카메라 통합 및 기능 통합
+- 포인트 클라우드 데이터 처리 및 필터링 최적화
+- 실시간 3D 시각화 성능 개선
+- C++ 애플리케이션 안정성 및 성능 최적화
+
+### 예정된 작업 📋
+- 라우터를 통한 멀티 카메라 출력 구현
+- C++ 애플리케이션과 Python 모듈 간 데이터 교환 인터페이스 구현
+- 실시간 트래킹 성능 개선
+- GPU 가속 처리 도입
+- 다중 카메라 설정 및 캘리브레이션
+
+</details>
+
+<br>
+
 <h3>📝 참고 자료</h3>
 
 <details>
@@ -599,7 +792,8 @@ OBSBOT_Test/
 - [OBSBOT OSC 명령어 참조](https://www.obsbot.co.kr/kr/explore/obsbot-center/osc)
 - [Ultralytics YOLO 문서](https://docs.ultralytics.com/ko/modes/track/#why-choose-ultralytics-yolo-for-object-tracking)
 - [Python-OSC 라이브러리](https://pypi.org/project/python-osc/)
+- [Orbbec SDK 공식 문서](https://developer.orbbec.com/technical_support.html)
 - [Open3D 문서](http://www.open3d.org/docs/release/)
-- [Orbbec SDK 문서](https://orbbec3d.com/index/download.html)
+- [OpenCV 공식 문서](https://docs.opencv.org/)
 
 </details>
