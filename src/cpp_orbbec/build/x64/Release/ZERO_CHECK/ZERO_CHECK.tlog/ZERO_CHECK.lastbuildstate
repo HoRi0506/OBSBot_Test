@@ -1,2 +1,2 @@
-PlatformToolSet=v143:VCToolArchitecture=Native64Bit:VCToolsVersion=14.42.34433:TargetPlatformVersion=10.0.22621.0:
-Release|x64|C:\project\obsbot\OBSBot_Test\src\cpp_orbbec\build\|
+PlatformToolSet=v143:VCToolArchitecture=Native64Bit:VCToolsVersion=14.43.34808:TargetPlatformVersion=10.0.22621.0:VcpkgTriplet=x64-windows:
+Release|x64|C:\project\OBSBot_Test\src\cpp_orbbec\build\|

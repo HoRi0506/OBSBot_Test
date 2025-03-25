@@ -1,3 +1,3 @@
-C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/cpp_orbbec.dir
-C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/ALL_BUILD.dir
-C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/ZERO_CHECK.dir
+C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/cpp_orbbec.dir
+C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/ALL_BUILD.dir
+C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/ZERO_CHECK.dir

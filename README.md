@@ -473,7 +473,7 @@ pip install opencv-python
    - 바닥 그리드 표시 기능
 
 2. **orbbec_official_pointcloud.py**
-   - Orbbec SDK 공식 예제 기반 포인트 클라우드 생성
+   - Orbbec 공식 SDK 기반 포인트 클라우드 생성
    - 깊이 기반 색상화 (가까운 점: 파랑, 먼 점: 빨강)
    - 다운샘플링 및 비유효 포인트 제거 기능
 
@@ -505,9 +505,9 @@ python src/orbbecFemtoMega/orbbec_official_pointcloud.py
 <summary>일반적인 문제 및 해결 방법</summary>
 
 ### 카메라 인식 문제
-- USB 3.0 포트에 연결되어 있는지 확인
-- 카메라 드라이버 재설치
-- 다른 USB 케이블 시도
+- USB 3.0 포트에 직접 연결 (허브 사용 지양)
+- 다른 USB 케이블로 교체 시도
+- OrbbecViewer 도구로 카메라 연결 테스트
 
 ### DLL 로드 오류
 - OrbbecSDK가 올바르게 설치되었는지 확인
@@ -524,10 +524,6 @@ python src/orbbecFemtoMega/orbbec_official_pointcloud.py
 <br>
 
 ## 프로젝트 공통 정보
-
-<br>
-
-<h3>📁 프로젝트 구조</h3>
 
 <h3>🎯 프로젝트 진행 상황</h3>
 
@@ -574,36 +570,59 @@ Orbbec Femto Mega 카메라의 3D 이미징 기능을 C++로 구현하여 보다
 <summary>설치 및 빌드 방법</summary>
 
 ### 필수 종속성
-- CMake (3.10 이상)
-- Visual Studio 2019 이상 (C++ 개발 환경)
-- Orbbec SDK (2.x 이상)
-- OpenCV 4.x
+- CMake (설치해야 함) (추가로 VScode에서 프로젝트를 진행하는 경우 CMake Tools Extension 설치 필요)
+- Visual Studio (C++ 개발 환경 및 다른 라이브러리에 맞춰서)
+- Orbbec SDK
+- OpenCV
 - Open3D
 
-### Orbbec SDK 설치
-1. [Orbbec 개발자 포털](https://developer.orbbec.com/download.html)에서 Orbbec SDK 다운로드
-2. SDK 설치 및 환경 변수 설정 (경로: `C:\Program Files\Orbbec\OrbbecSDK`)
+### Build
+1. **Orbbec SDK clone**
+   - [Orbbec SDK K4A Wrapper](https://github.com/orbbec/OrbbecSDK-K4A-Wrapper)에서 Orbbec SDK git clone
+     ```bash
+     git clone https://github.com/orbbec/OrbbecSDK-K4A-Wrapper.git
+     ```
 
-### Open3D 설치
-1. 공식 [Open3D GitHub](https://github.com/isl-org/Open3D) 참조
-2. 바이너리 또는 소스에서 빌드 가능
+2. **Azure Kinect SDK 설치**
+   - [Azure Kinect SDK](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md)에서 원하는 버전 설치
 
-### OpenCV 설치
-1. [OpenCV 공식 사이트](https://opencv.org/releases/) 에서 다운로드
-2. 또는 vcpkg를 통한 설치: `vcpkg install opencv:x64-windows`
+3. **OpenCV & Open3D 설치**
+   - vcpkg를 사용하여 OpenCV 설치
+     ```
+     vcpkg install opencv:x64-windows
+     ```
+   - Open3D 설치
+     ```
+     git clone --recursive https://github.com/intel-isl/Open3D.git
+     ```
+   - 자세한 과정은 github 혹은 인터넷 참조
+  
 
-### 빌드 방법
-```bash
-# 빌드 디렉토리 생성
-mkdir build
-cd build
+4. **환경 변수 및 CMakeLists.txt 설정**
+   - Orbbec SDK 폴더 PATH를 CMakeLists.txt에 추가
+     ```
+     {git clone address}/OrbbecSDK-K4A-Wrapper
+     ```
+   - PATH 환경 변수에 추가
+   - OpenCV, Open3D, Azure Kinect SDK도 동일하게 설정
 
-# CMake 구성
-cmake ..
+5. **실행**
+   - build 폴더 생성 및 이동
+      ```
+      mkdir build
+      cd build
+      ```
+   - CMake 실행 및 빌드
+     ```
+     cmake ..
+     cmake --build . --config Release
+     ```
+   - Release 폴더 이동
+     ```
+     cd Release
+     ```
+   - 생성된 실행파일 실행
 
-# 빌드
-cmake --build . --config Release
-```
 
 </details>
 
@@ -617,7 +636,7 @@ cmake --build . --config Release
 ### 주요 기능
 - Femto Mega 카메라의 컬러 및 깊이 스트림 실시간 처리
 - 깊이 데이터 기반 3D 포인트 클라우드 생성
-- YOLO 포즈 추정 통합
+- Azure Kinect 포즈 추정 통합
 - 스켈레톤 추적 및 3D 시각화
 
 ### 주요 구성 요소
@@ -633,9 +652,9 @@ cmake --build . --config Release
    - 깊이 데이터 기반 3D 포인트 생성
    - Open3D 기반 시각화
 
-4. **YOLO 포즈 추정**
+4. **Azure Kinect 포즈 추정**
    - 인체 포즈 키포인트 추출
-   - 3D 공간상의 스켈레톤 시각화
+   - 3D 및 depth 공간상의 스켈레톤 시각화
 
 </details>
 
@@ -663,11 +682,6 @@ cmake --build . --config Release
      - k4arecord.dll
      - ob_usb.dll
      - 기타 필요한 종속성 DLL 파일들
-
-### 카메라 연결 문제
-- USB 3.0 포트에 직접 연결 (허브 사용 지양)
-- 다른 USB 케이블로 교체 시도
-- OrbbecViewer 도구로 카메라 연결 테스트
 
 ### 빌드 오류
 - CMake 캐시 초기화 후 재빌드
@@ -702,7 +716,7 @@ cpp_orbbec/
 ```
 
 ### 주요 코드 설명
-- **main.cpp**: 카메라 초기화, 프레임 처리, 포인트 클라우드 생성 및 시각화, YOLO 포즈 추정 통합
+- **main.cpp**: 카메라 초기화, 프레임 처리, 포인트 클라우드 생성 및 시각화, Azure Kinect 포즈 추정 통합
 - **CMakeLists.txt**: 프로젝트 빌드 구성, 종속성 설정, DLL 복사 명령어
 
 </details>
@@ -765,7 +779,8 @@ OBSBOT_Test/
 - [X] 바닥 그리드 추가 및 시각화 개선
 - [X] C++ Orbbec SDK 통합 및 빌드 환경 구성
 - [X] C++ 애플리케이션에서 발생한 "Debug Error! abort()" 문제 해결
-- [X] YOLO 포즈 추정 C++ 통합
+- [X] Azure Kinect 포즈 추정 C++ 통합
+- [X] 카메라 해상도 설정
 
 ### 진행 중인 작업 🔄
 - Orbbec Femto Mega, OBSBOT 카메라 통합 및 기능 통합
@@ -775,7 +790,6 @@ OBSBOT_Test/
 
 ### 예정된 작업 📋
 - 라우터를 통한 멀티 카메라 출력 구현
-- C++ 애플리케이션과 Python 모듈 간 데이터 교환 인터페이스 구현
 - 실시간 트래킹 성능 개선
 - GPU 가속 처리 도입
 - 다중 카메라 설정 및 캘리브레이션
@@ -795,5 +809,158 @@ OBSBOT_Test/
 - [Orbbec SDK 공식 문서](https://developer.orbbec.com/technical_support.html)
 - [Open3D 문서](http://www.open3d.org/docs/release/)
 - [OpenCV 공식 문서](https://docs.opencv.org/)
+- [Azuru Kinect SDK Skeleton](https://ifelldh.tec.mx/sites/g/files/vgjovo1101/files/Azure%20Kinect%20DK%20Specifications.pdf)
+- [Orbbec Femto Mega Dataset](https://d1cd332k3pgc17.cloudfront.net/wp-content/uploads/2023/04/ORBBEC_Datasheet_Femto-Mega1.pdf)
+
+</details>
+
+<br>
+
+## 3D 스켈레톤 추적 시스템 (cpp_orbbec)
+
+<br>
+
+<h3>📚 프로젝트 개요</h3>
+
+<details>
+<summary>프로젝트 소개</summary>
+
+Orbbec Femto Mega 카메라와 Azure Kinect Body Tracking SDK를 활용하여 실시간으로 인체 스켈레톤을 추적하고 3D로 시각화하는 시스템입니다. Open3D와 OpenCV를 통해 고품질 3D 시각화 및 이미지 처리를 제공합니다.
+
+### 주요 기능
+- 실시간 3D 인체 스켈레톤 추적 및 시각화
+- Open3D를 사용한 포인트 클라우드 렌더링
+- 스켈레톤 색상 및 크기 조절 기능
+- 다양한 FOV(Field of View) 모드 지원
+- 배경 그리드 표시 기능
+- OpenCV를 이용한 2D 이미지 처리 및 표시
+
+</details>
+
+<br>
+
+<h3>🔧 시스템 요구사항</h3>
+
+<details>
+<summary>하드웨어 및 소프트웨어 요구사항</summary>
+
+### 하드웨어
+- Orbbec Femto Mega 카메라 (Azure Kinect 호환)
+- 64비트 Windows 운영체제를 갖춘 컴퓨터
+- 8GB 이상 RAM (16GB 권장)
+- DX11 지원 그래픽 카드
+
+### 소프트웨어
+- Windows 10 이상
+- Visual Studio 2019 이상
+- CMake 3.31.6 이상
+- vcpkg 패키지 관리자
+
+</details>
+
+<br>
+
+<h3>📁 종속성 설치</h3>
+
+<details>
+<summary>종속성 설치 방법</summary>
+
+### 1. vcpkg 설치
+```bash
+# vcpkg 클론 및 설치
+git clone https://github.com/microsoft/vcpkg.git C:/clone/vcpkg-master
+cd C:/clone/vcpkg-master
+bootstrap-vcpkg.bat
+```
+
+### 2. OpenCV 설치
+```bash
+# vcpkg를 통한 OpenCV 설치
+C:/clone/vcpkg-master/vcpkg install opencv4:x64-windows
+```
+
+### 3. Open3D 설치
+Open3D는 공식 웹사이트에서 다운로드하거나 소스에서 빌드할 수 있습니다.
+- [Open3D 공식 사이트](https://www.open3d.org/docs/release/compilation.html)
+- 빌드된 바이너리를 `C:/clone/open3d`에 위치시키세요.
+
+### 4. Orbbec SDK (Azure Kinect SDK Wrapper) 설치
+Orbbec SDK K4A Wrapper를 다운로드하여 `C:/clone/OrbbecSDK_K4A_Wrapper_v1.10.3_windows_202408091749`에 설치하세요.
+
+### 5. Azure Kinect Body Tracking SDK 설치
+Microsoft 공식 웹사이트에서 SDK를 다운로드하여 기본 경로에 설치하세요.
+- [Azure Kinect Body Tracking SDK](https://learn.microsoft.com/en-us/azure/kinect-dk/body-sdk-download)
+
+</details>
+
+<br>
+
+<h3>🛠️ 빌드 방법</h3>
+
+<details>
+<summary>빌드 방법</summary>
+
+### CMake 빌드 방법
+```bash
+# 프로젝트 루트 디렉토리에서
+mkdir build
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake ..
+cmake --build . --config Release
+```
+
+### Visual Studio에서 빌드
+1. Visual Studio에서 프로젝트 열기
+2. CMake 설정에서 툴체인 파일 지정: `-DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake`
+3. 빌드 구성을 'Release'로 설정
+4. 프로젝트 빌드
+
+### 필요한 DLL 파일
+빌드 과정에서 다음 DLL 파일들이 자동으로 복사됩니다:
+- OrbbecSDK DLL 파일들
+- Open3D.dll
+- k4abt.dll
+- dnn_model_2_0_op11.onnx, dnn_model_2_0_lite_op11.onnx (신경망 모델 파일)
+- onnxruntime.dll
+
+</details>
+
+<br>
+
+<h3>🎮 사용 방법</h3>
+
+<details>
+<summary>프로그램 사용 방법</summary>
+
+### 기본 조작법
+- ESC: 프로그램 종료
+- 1-4: FOV 모드 변경
+  - 1: NFOV Unbinned (640×576)
+  - 2: WFOV Unbinned (1024×1024)
+  - 3: WFOV Binned (512×512)
+  - 4: NFOV 2x2 Binned (320×288)
+- C: 스켈레톤 색상 변경 (노란색, 빨간색, 초록색, 파란색)
+- +/-: 스켈레톤 크기 조절
+- P: 포인트 클라우드 표시/숨김
+
+### 시각화 창
+- 3D 뷰어: 스켈레톤과 포인트 클라우드를 3D로 표시
+- Color&Depth: 컬러 이미지와 깊이 이미지를 함께 표시
+
+</details>
+
+<br>
+
+<h3>📊 프로젝트 구조</h3>
+
+<details>
+<summary>디렉터리 구조</summary>
+
+```
+cpp_orbbec/
+├── CMakeLists.txt          # 프로젝트 빌드 설정
+└── src/
+    └── main.cpp            # 메인 소스 코드
+```
 
 </details>

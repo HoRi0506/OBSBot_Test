@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\project\obsbot\OBSBot_Test\src\cpp_orbbec\src\main.cpp">
+    <ClCompile Include="C:\project\OBSBot_Test\src\cpp_orbbec\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\project\obsbot\OBSBot_Test\src\cpp_orbbec\CMakeLists.txt" />
+    <CustomBuild Include="C:\project\OBSBot_Test\src\cpp_orbbec\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{AA2FF876-98E5-3FF6-A3AD-AED5DC5975CC}</UniqueIdentifier>
+      <UniqueIdentifier>{095C2066-5046-377A-A91F-C73ACB644C7D}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

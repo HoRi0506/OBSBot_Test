@@ -2,13 +2,13 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\project\obsbot\OBSBot_Test\src\cpp_orbbec\build\x64\Release\ZERO_CHECK</FullPath>
+      <FullPath>C:\project\OBSBot_Test\src\cpp_orbbec\build\x64\Release\ZERO_CHECK</FullPath>
     </ProjectOutput>
     <ProjectOutput>
-      <FullPath>C:\project\obsbot\OBSBot_Test\src\cpp_orbbec\build\Release\cpp_orbbec.exe</FullPath>
+      <FullPath>C:\project\OBSBot_Test\src\cpp_orbbec\build\Release\cpp_orbbec.exe</FullPath>
     </ProjectOutput>
     <ProjectOutput>
-      <FullPath>C:\project\obsbot\OBSBot_Test\src\cpp_orbbec\build\x64\Release\ALL_BUILD</FullPath>
+      <FullPath>C:\project\OBSBot_Test\src\cpp_orbbec\build\x64\Release\ALL_BUILD</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

@@ -1,6 +1,6 @@
-^C:\PROJECT\OBSBOT\OBSBOT_TEST\SRC\CPP_ORBBEC\CMAKELISTS.TXT
+^C:\PROJECT\OBSBOT_TEST\SRC\CPP_ORBBEC\CMAKELISTS.TXT
 setlocal
-C:\Users\vmfls\anaconda3\envs\ultralyticYOLO\Library\bin\cmake.exe -SC:/project/obsbot/OBSBot_Test/src/cpp_orbbec -BC:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build --check-stamp-file C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/project/OBSBot_Test/src/cpp_orbbec -BC:/project/OBSBot_Test/src/cpp_orbbec/build --check-stamp-file C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone

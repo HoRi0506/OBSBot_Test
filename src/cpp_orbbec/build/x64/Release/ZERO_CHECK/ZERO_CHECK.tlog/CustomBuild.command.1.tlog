@@ -1,6 +1,6 @@
-^C:\PROJECT\OBSBOT\OBSBOT_TEST\SRC\CPP_ORBBEC\BUILD\CMAKEFILES\EFB6B95DDF0067E0AE66716D7728A3DE\GENERATE.STAMP.RULE
+^C:\PROJECT\OBSBOT_TEST\SRC\CPP_ORBBEC\BUILD\CMAKEFILES\40B52275E163B99A685A995A31A453D6\GENERATE.STAMP.RULE
 setlocal
-C:\Users\vmfls\anaconda3\envs\ultralyticYOLO\Library\bin\cmake.exe -SC:/project/obsbot/OBSBot_Test/src/cpp_orbbec -BC:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/cpp_orbbec.sln
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/project/OBSBot_Test/src/cpp_orbbec -BC:/project/OBSBot_Test/src/cpp_orbbec/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/project/OBSBot_Test/src/cpp_orbbec/build/cpp_orbbec.sln
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone

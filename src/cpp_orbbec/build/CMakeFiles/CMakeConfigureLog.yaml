@@ -4,16 +4,16 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineSystem.cmake:205 (message)"
       - "CMakeLists.txt:2 (project)"
     message: |
       The system is: Windows - 10.0.26100 - AMD64
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:2 (project)"
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
@@ -23,10 +23,10 @@ events:
       
       The output was:
       0
-      msbuild 버전 17.12.12+1cce77968(.NET Framework용)
-      빌드 시작: 2025-03-19 오후 4:57:17
+      msbuild 버전 17.13.19+0d9f5a35a(.NET Framework용)
+      빌드 시작: 2025-03-25 오후 6:08:05
       
-      1 노드의 "C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\3.31.6\\CompilerIdCXX\\CompilerIdCXX.vcxproj" 프로젝트(기본 대상)입니다.
+      1 노드의 "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\4.0.0-rc4\\CompilerIdCXX\\CompilerIdCXX.vcxproj" 프로젝트(기본 대상)입니다.
       PrepareForBuild:
         "Debug\\" 디렉터리를 만들고 있습니다.
         구조적 출력을 사용할 수 있습니다. 컴파일러 진단의 서식은 오류 계층 구조를 반영합니다. 자세한 내용은 https://aka.ms/cpp/structured-output을 참조하세요.
@@ -34,26 +34,35 @@ events:
       InitializeBuildStatus:
         "AlwaysCreate"이(가) 지정되었기 때문에 "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild"을(를) 만들고 있습니다.
         "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild"에 연결(touching)하고 있습니다.
+      VcpkgTripletSelection:
+        Using triplet "x64-windows" from "C:\\clone\\vcpkg-master\\installed\\x64-windows\\"
+        Using normalized configuration "Release"
       ClCompile:
-        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
         CMakeCXXCompilerId.cpp
       Link:
-        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
-        CompilerIdCXX.vcxproj -> C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\3.31.6\\CompilerIdCXX\\CompilerIdCXX.exe
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\lib" /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "C:\\clone\\vcpkg-master\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
+        CompilerIdCXX.vcxproj -> C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\4.0.0-rc4\\CompilerIdCXX\\CompilerIdCXX.exe
+      AppLocalFromInstalled:
+        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\clone\\vcpkg-master\\scripts\\buildsystems\\msbuild\\applocal.ps1" "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\4.0.0-rc4\\CompilerIdCXX\\CompilerIdCXX.exe" "C:\\clone\\vcpkg-master\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+        'pwsh.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+        배치 파일이 아닙니다.
+        "pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\clone\\vcpkg-master\\scripts\\buildsystems\\msbuild\\applocal.ps1" "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\4.0.0-rc4\\CompilerIdCXX\\CompilerIdCXX.exe" "C:\\clone\\vcpkg-master\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"" 명령이 종료되었습니다(코드: 9009).
+        "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "C:\\clone\\vcpkg-master\\scripts\\buildsystems\\msbuild\\applocal.ps1" "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\4.0.0-rc4\\CompilerIdCXX\\CompilerIdCXX.exe" "C:\\clone\\vcpkg-master\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"
       PostBuildEvent:
         for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
         :VCEnd
-        CMAKE_CXX_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\bin\\Hostx64\\x64\\cl.exe
+        CMAKE_CXX_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64\\cl.exe
       FinalizeBuildStatus:
         "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" 파일을 삭제하고 있습니다.
         "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate"에 연결(touching)하고 있습니다.
-      "C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\3.31.6\\CompilerIdCXX\\CompilerIdCXX.vcxproj" 프로젝트를 빌드했습니다(기본 대상).
+      "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\4.0.0-rc4\\CompilerIdCXX\\CompilerIdCXX.vcxproj" 프로젝트를 빌드했습니다(기본 대상).
       
       빌드했습니다.
           경고 0개
           오류 0개
       
-      경과 시간: 00:00:00.50
+      경과 시간: 00:00:01.11
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -61,19 +70,19 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
       
       The CXX compiler identification is MSVC, found in:
-        C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/3.31.6/CompilerIdCXX/CompilerIdCXX.exe
+        C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/4.0.0-rc4/CompilerIdCXX/CompilerIdCXX.exe
       
   -
     kind: "try_compile-v1"
     backtrace:
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
       - "CMakeLists.txt:2 (project)"
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-aso4kc"
-      binary: "C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-aso4kc"
+      source: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-6jhd7s"
+      binary: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-6jhd7s"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
@@ -83,53 +92,62 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-aso4kc'
+        Change Dir: 'C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-6jhd7s'
         
-        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_688f2.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-        msbuild 踰꾩쟾 17.12.12+1cce77968(.NET Framework??
-        鍮뚮뱶 ?쒖옉: 2025-03-19 ?ㅽ썑 4:57:18
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_f5064.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        msbuild 踰꾩쟾 17.13.19+0d9f5a35a(.NET Framework??
+        鍮뚮뱶 ?쒖옉: 2025-03-25 ?ㅽ썑 6:08:06
         
-        1 ?몃뱶??"C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-aso4kc\\cmTC_688f2.vcxproj" ?꾨줈?앺듃(湲곕낯 ?\xc2\x80???낅땲??
+        1 ?몃뱶??"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\cmTC_f5064.vcxproj" ?꾨줈?앺듃(湲곕낯 ?\xc2\x80???낅땲??
         PrepareForBuild:
-          "cmTC_688f2.dir\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_f5064.dir\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
           援ъ“??異쒕젰???ъ슜?????덉뒿?덈떎. 而댄뙆?쇰윭 吏꾨떒???쒖떇?\xc2\x80 ?ㅻ쪟 怨꾩링 援ъ“瑜?諛섏쁺?⑸땲?? ?먯꽭???댁슜?\xc2\x80 https://aka.ms/cpp/structured-output??李몄“?섏꽭??
-          "C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-aso4kc\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
-          "cmTC_688f2.dir\\Debug\\cmTC_688f2.tlog\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
         InitializeBuildStatus:
-          "AlwaysCreate"??媛\xc2\x80) 吏\xc2\x80?뺣릺?덇린 ?뚮Ц??"cmTC_688f2.dir\\Debug\\cmTC_688f2.tlog\\unsuccessfulbuild"??瑜? 留뚮뱾怨??덉뒿?덈떎.
-          "cmTC_688f2.dir\\Debug\\cmTC_688f2.tlog\\unsuccessfulbuild"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
+          "AlwaysCreate"??媛\xc2\x80) 吏\xc2\x80?뺣릺?덇린 ?뚮Ц??"cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\unsuccessfulbuild"??瑜? 留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\unsuccessfulbuild"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "C:\\clone\\vcpkg-master\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
         ClCompile:
-          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_688f2.dir\\Debug\\\\" /Fd"cmTC_688f2.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\Users\\vmfls\\anaconda3\\envs\\ultralyticYOLO\\Library\\share\\cmake-3.31\\Modules\\CMakeCXXCompilerABI.cpp"
-          Microsoft (R) C/C++ 理쒖쟻??而댄뙆?쇰윭 踰꾩쟾 19.42.34436(x64)
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_f5064.dir\\Debug\\\\" /Fd"cmTC_f5064.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.0\\Modules\\CMakeCXXCompilerABI.cpp"
+          Microsoft (R) C/C++ 理쒖쟻??而댄뙆?쇰윭 踰꾩쟾 19.43.34809(x64)
           Copyright (c) Microsoft Corporation. All rights reserved.
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_688f2.dir\\Debug\\\\" /Fd"cmTC_688f2.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\Users\\vmfls\\anaconda3\\envs\\ultralyticYOLO\\Library\\share\\cmake-3.31\\Modules\\CMakeCXXCompilerABI.cpp"
+          cl /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_f5064.dir\\Debug\\\\" /Fd"cmTC_f5064.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.0\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-aso4kc\\Debug\\cmTC_688f2.exe" /INCREMENTAL /ILK:"cmTC_688f2.dir\\Debug\\cmTC_688f2.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-aso4kc/Debug/cmTC_688f2.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/project/obsbot/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-aso4kc/Debug/cmTC_688f2.lib" /MACHINE:X64  /machine:x64 cmTC_688f2.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_688f2.vcxproj -> C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-aso4kc\\Debug\\cmTC_688f2.exe
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\Debug\\cmTC_f5064.exe" /INCREMENTAL /ILK:"cmTC_f5064.dir\\Debug\\cmTC_f5064.ilk" /NOLOGO /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib" /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-6jhd7s/Debug/cmTC_f5064.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-6jhd7s/Debug/cmTC_f5064.lib" /MACHINE:X64  /machine:x64 cmTC_f5064.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_f5064.vcxproj -> C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\Debug\\cmTC_f5064.exe
+        AppLocalFromInstalled:
+          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\clone\\vcpkg-master\\scripts\\buildsystems\\msbuild\\applocal.ps1" "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\Debug\\cmTC_f5064.exe" "C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\bin" "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\cmTC_f5064.write.1u.tlog" "cmTC_f5064.dir\\Debug\\vcpkg.applocal.log"
+          'pwsh.exe'?\xc2\x80(?? ?대? ?먮뒗 ?몃? 紐낅졊, ?ㅽ뻾?????덈뒗 ?꾨줈洹몃옩, ?먮뒗
+          諛곗튂 ?뚯씪???꾨떃?덈떎.
+          "pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\clone\\vcpkg-master\\scripts\\buildsystems\\msbuild\\applocal.ps1" "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\Debug\\cmTC_f5064.exe" "C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\bin" "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\cmTC_f5064.write.1u.tlog" "cmTC_f5064.dir\\Debug\\vcpkg.applocal.log"" 紐낅졊??醫낅즺?섏뿀?듬땲??肄붾뱶: 9009).
+          "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "C:\\clone\\vcpkg-master\\scripts\\buildsystems\\msbuild\\applocal.ps1" "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\Debug\\cmTC_f5064.exe" "C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\bin" "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\cmTC_f5064.write.1u.tlog" "cmTC_f5064.dir\\Debug\\vcpkg.applocal.log"
         FinalizeBuildStatus:
-          "cmTC_688f2.dir\\Debug\\cmTC_688f2.tlog\\unsuccessfulbuild" ?뚯씪????젣?섍퀬 ?덉뒿?덈떎.
-          "cmTC_688f2.dir\\Debug\\cmTC_688f2.tlog\\cmTC_688f2.lastbuildstate"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
-        "C:\\project\\obsbot\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-aso4kc\\cmTC_688f2.vcxproj" ?꾨줈?앺듃瑜?鍮뚮뱶?덉뒿?덈떎(湲곕낯 ?\xc2\x80??.
+          "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\unsuccessfulbuild" ?뚯씪????젣?섍퀬 ?덉뒿?덈떎.
+          "cmTC_f5064.dir\\Debug\\cmTC_f5064.tlog\\cmTC_f5064.lastbuildstate"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-6jhd7s\\cmTC_f5064.vcxproj" ?꾨줈?앺듃瑜?鍮뚮뱶?덉뒿?덈떎(湲곕낯 ?\xc2\x80??.
         
         鍮뚮뱶?덉뒿?덈떎.
             寃쎄퀬 0媛?
             ?ㅻ쪟 0媛?
         
-        寃쎄낵 ?쒓컙: 00:00:00.45
+        寃쎄낵 ?쒓컙: 00:00:00.83
         
       exitCode: 0
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineCompilerABI.cmake:227 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
       - "CMakeLists.txt:2 (project)"
     message: |
       Parsed CXX implicit link information:
-        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
-        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
-        linker tool for 'CXX': C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/HostX64/x64/link.exe
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'CXX': C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.43.34808/bin/HostX64/x64/link.exe
         implicit libs: []
         implicit objs: []
         implicit dirs: []
@@ -139,12 +157,212 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:255 (cmake_determine_linker_id)"
-      - "C:/Users/vmfls/anaconda3/envs/ultralyticYOLO/Library/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/Internal/CMakeDetermineLinkerId.cmake:36 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeDetermineCompilerABI.cmake:264 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
       - "CMakeLists.txt:2 (project)"
     message: |
-      Running the CXX compiler's linker: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/HostX64/x64/link.exe" "-v"
-      Microsoft (R) Incremental Linker Version 14.42.34436.0
+      Running the CXX compiler's linker: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.43.34808/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.43.34809.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/Internal/CheckSourceCompiles.cmake:104 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CheckCXXSourceCompiles.cmake:58 (cmake_check_source_compiles)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/FindThreads.cmake:99 (check_cxx_source_compiles)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake:78 (find_package)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/absl/abslConfig.cmake:4 (find_dependency)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/protobuf/protobuf-config.cmake:7 (find_package)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake:78 (find_package)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4/OpenCVModules.cmake:19 (find_dependency)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4/OpenCVConfig.cmake:126 (include)"
+      - "CMakeLists.txt:18 (find_package)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-g8knvg"
+      binary: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-g8knvg"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-g8knvg'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_1f0b2.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        msbuild 踰꾩쟾 17.13.19+0d9f5a35a(.NET Framework??
+        鍮뚮뱶 ?쒖옉: 2025-03-25 ?ㅽ썑 6:08:08
+        
+        1 ?몃뱶??"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\cmTC_1f0b2.vcxproj" ?꾨줈?앺듃(湲곕낯 ?\xc2\x80???낅땲??
+        PrepareForBuild:
+          "cmTC_1f0b2.dir\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          援ъ“??異쒕젰???ъ슜?????덉뒿?덈떎. 而댄뙆?쇰윭 吏꾨떒???쒖떇?\xc2\x80 ?ㅻ쪟 怨꾩링 援ъ“瑜?諛섏쁺?⑸땲?? ?먯꽭???댁슜?\xc2\x80 https://aka.ms/cpp/structured-output??李몄“?섏꽭??
+          "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_1f0b2.dir\\Debug\\cmTC_1f0b2.tlog\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+        InitializeBuildStatus:
+          "AlwaysCreate"??媛\xc2\x80) 吏\xc2\x80?뺣릺?덇린 ?뚮Ц??"cmTC_1f0b2.dir\\Debug\\cmTC_1f0b2.tlog\\unsuccessfulbuild"??瑜? 留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_1f0b2.dir\\Debug\\cmTC_1f0b2.tlog\\unsuccessfulbuild"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "C:\\clone\\vcpkg-master\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++17 /Fo"cmTC_1f0b2.dir\\Debug\\\\" /Fd"cmTC_1f0b2.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\src.cxx"
+          Microsoft (R) C/C++ 理쒖쟻??而댄뙆?쇰윭 踰꾩쟾 19.43.34809(x64)
+          Copyright (c) Microsoft Corporation. All rights reserved.
+          cl /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++17 /Fo"cmTC_1f0b2.dir\\Debug\\\\" /Fd"cmTC_1f0b2.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\src.cxx"
+          src.cxx
+        C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\src.cxx(1,10): error C1083: ?ы븿 ?뚯씪???????놁뒿?덈떎. 'pthread.h': No such file or directory [C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\cmTC_1f0b2.vcxproj]
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\cmTC_1f0b2.vcxproj" ?꾨줈?앺듃瑜?鍮뚮뱶?덉뒿?덈떎(湲곕낯 ?\xc2\x80??. - ?ㅽ뙣
+        
+        鍮뚮뱶?섏? 紐삵뻽?듬땲??
+        
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\cmTC_1f0b2.vcxproj"(湲곕낯 ?\xc2\x80??(1)->
+        (ClCompile ?\xc2\x80?? -> 
+          C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\src.cxx(1,10): error C1083: ?ы븿 ?뚯씪???????놁뒿?덈떎. 'pthread.h': No such file or directory [C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-g8knvg\\cmTC_1f0b2.vcxproj]
+        
+            寃쎄퀬 0媛?
+            ?ㅻ쪟 1媛?
+        
+        寃쎄낵 ?쒓컙: 00:00:00.28
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CheckLibraryExists.cmake:112 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/FindThreads.cmake:112 (check_library_exists)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/FindThreads.cmake:175 (_threads_check_lib)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake:78 (find_package)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/absl/abslConfig.cmake:4 (find_dependency)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/protobuf/protobuf-config.cmake:7 (find_package)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake:78 (find_package)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4/OpenCVModules.cmake:19 (find_dependency)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4/OpenCVConfig.cmake:126 (include)"
+      - "CMakeLists.txt:18 (find_package)"
+    checks:
+      - "Looking for pthread_create in pthreads"
+    directories:
+      source: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-wqtiyw"
+      binary: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-wqtiyw"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREADS_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-wqtiyw'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_f7880.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        msbuild 踰꾩쟾 17.13.19+0d9f5a35a(.NET Framework??
+        鍮뚮뱶 ?쒖옉: 2025-03-25 ?ㅽ썑 6:08:09
+        
+        1 ?몃뱶??"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\cmTC_f7880.vcxproj" ?꾨줈?앺듃(湲곕낯 ?\xc2\x80???낅땲??
+        PrepareForBuild:
+          "cmTC_f7880.dir\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          援ъ“??異쒕젰???ъ슜?????덉뒿?덈떎. 而댄뙆?쇰윭 吏꾨떒???쒖떇?\xc2\x80 ?ㅻ쪟 怨꾩링 援ъ“瑜?諛섏쁺?⑸땲?? ?먯꽭???댁슜?\xc2\x80 https://aka.ms/cpp/structured-output??李몄“?섏꽭??
+          "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_f7880.dir\\Debug\\cmTC_f7880.tlog\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+        InitializeBuildStatus:
+          "AlwaysCreate"??媛\xc2\x80) 吏\xc2\x80?뺣릺?덇린 ?뚮Ц??"cmTC_f7880.dir\\Debug\\cmTC_f7880.tlog\\unsuccessfulbuild"??瑜? 留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_f7880.dir\\Debug\\cmTC_f7880.tlog\\unsuccessfulbuild"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "C:\\clone\\vcpkg-master\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++17 /Fo"cmTC_f7880.dir\\Debug\\\\" /Fd"cmTC_f7880.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\CheckFunctionExists.cxx"
+          Microsoft (R) C/C++ 理쒖쟻??而댄뙆?쇰윭 踰꾩쟾 19.43.34809(x64)
+          Copyright (c) Microsoft Corporation. All rights reserved.
+          cl /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++17 /Fo"cmTC_f7880.dir\\Debug\\\\" /Fd"cmTC_f7880.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\CheckFunctionExists.cxx"
+          CheckFunctionExists.cxx
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\Debug\\cmTC_f7880.exe" /INCREMENTAL /ILK:"cmTC_f7880.dir\\Debug\\cmTC_f7880.ilk" /NOLOGO /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib" /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib\\manual-link" pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-wqtiyw/Debug/cmTC_f7880.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-wqtiyw/Debug/cmTC_f7880.lib" /MACHINE:X64  /machine:x64 cmTC_f7880.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: 'pthreads.lib' ?뚯씪???????놁뒿?덈떎. [C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\cmTC_f7880.vcxproj]
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\cmTC_f7880.vcxproj" ?꾨줈?앺듃瑜?鍮뚮뱶?덉뒿?덈떎(湲곕낯 ?\xc2\x80??. - ?ㅽ뙣
+        
+        鍮뚮뱶?섏? 紐삵뻽?듬땲??
+        
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\cmTC_f7880.vcxproj"(湲곕낯 ?\xc2\x80??(1)->
+        (Link ?\xc2\x80?? -> 
+          LINK : fatal error LNK1104: 'pthreads.lib' ?뚯씪???????놁뒿?덈떎. [C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-wqtiyw\\cmTC_f7880.vcxproj]
+        
+            寃쎄퀬 0媛?
+            ?ㅻ쪟 1媛?
+        
+        寃쎄낵 ?쒓컙: 00:00:00.36
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CheckLibraryExists.cmake:112 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/FindThreads.cmake:112 (check_library_exists)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/FindThreads.cmake:176 (_threads_check_lib)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake:78 (find_package)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/absl/abslConfig.cmake:4 (find_dependency)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/protobuf/protobuf-config.cmake:7 (find_package)"
+      - "C:/Program Files/CMake/share/cmake-4.0/Modules/CMakeFindDependencyMacro.cmake:78 (find_package)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4/OpenCVModules.cmake:19 (find_dependency)"
+      - "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4/OpenCVConfig.cmake:126 (include)"
+      - "CMakeLists.txt:18 (find_package)"
+    checks:
+      - "Looking for pthread_create in pthread"
+    directories:
+      source: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-v7jzit"
+      binary: "C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-v7jzit"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREAD_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-v7jzit'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_df56a.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        msbuild 踰꾩쟾 17.13.19+0d9f5a35a(.NET Framework??
+        鍮뚮뱶 ?쒖옉: 2025-03-25 ?ㅽ썑 6:08:10
+        
+        1 ?몃뱶??"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\cmTC_df56a.vcxproj" ?꾨줈?앺듃(湲곕낯 ?\xc2\x80???낅땲??
+        PrepareForBuild:
+          "cmTC_df56a.dir\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          援ъ“??異쒕젰???ъ슜?????덉뒿?덈떎. 而댄뙆?쇰윭 吏꾨떒???쒖떇?\xc2\x80 ?ㅻ쪟 怨꾩링 援ъ“瑜?諛섏쁺?⑸땲?? ?먯꽭???댁슜?\xc2\x80 https://aka.ms/cpp/structured-output??李몄“?섏꽭??
+          "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\Debug\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_df56a.dir\\Debug\\cmTC_df56a.tlog\\" ?붾젆?곕━瑜?留뚮뱾怨??덉뒿?덈떎.
+        InitializeBuildStatus:
+          "AlwaysCreate"??媛\xc2\x80) 吏\xc2\x80?뺣릺?덇린 ?뚮Ц??"cmTC_df56a.dir\\Debug\\cmTC_df56a.tlog\\unsuccessfulbuild"??瑜? 留뚮뱾怨??덉뒿?덈떎.
+          "cmTC_df56a.dir\\Debug\\cmTC_df56a.tlog\\unsuccessfulbuild"???곌껐(touching)?섍퀬 ?덉뒿?덈떎.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "C:\\clone\\vcpkg-master\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++17 /Fo"cmTC_df56a.dir\\Debug\\\\" /Fd"cmTC_df56a.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\CheckFunctionExists.cxx"
+          Microsoft (R) C/C++ 理쒖쟻??而댄뙆?쇰윭 踰꾩쟾 19.43.34809(x64)
+          Copyright (c) Microsoft Corporation. All rights reserved.
+          cl /c /I"C:\\clone\\vcpkg-master\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++17 /Fo"cmTC_df56a.dir\\Debug\\\\" /Fd"cmTC_df56a.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\CheckFunctionExists.cxx"
+          CheckFunctionExists.cxx
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.43.34808\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\Debug\\cmTC_df56a.exe" /INCREMENTAL /ILK:"cmTC_df56a.dir\\Debug\\cmTC_df56a.ilk" /NOLOGO /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib" /LIBPATH:"C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib\\manual-link" pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\clone\\vcpkg-master\\installed\\x64-windows\\debug\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-v7jzit/Debug/cmTC_df56a.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/project/OBSBot_Test/src/cpp_orbbec/build/CMakeFiles/CMakeScratch/TryCompile-v7jzit/Debug/cmTC_df56a.lib" /MACHINE:X64  /machine:x64 cmTC_df56a.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: 'pthread.lib' ?뚯씪???????놁뒿?덈떎. [C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\cmTC_df56a.vcxproj]
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\cmTC_df56a.vcxproj" ?꾨줈?앺듃瑜?鍮뚮뱶?덉뒿?덈떎(湲곕낯 ?\xc2\x80??. - ?ㅽ뙣
+        
+        鍮뚮뱶?섏? 紐삵뻽?듬땲??
+        
+        "C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\cmTC_df56a.vcxproj"(湲곕낯 ?\xc2\x80??(1)->
+        (Link ?\xc2\x80?? -> 
+          LINK : fatal error LNK1104: 'pthread.lib' ?뚯씪???????놁뒿?덈떎. [C:\\project\\OBSBot_Test\\src\\cpp_orbbec\\build\\CMakeFiles\\CMakeScratch\\TryCompile-v7jzit\\cmTC_df56a.vcxproj]
+        
+            寃쎄퀬 0媛?
+            ?ㅻ쪟 1媛?
+        
+        寃쎄낵 ?쒓컙: 00:00:00.36
+        
+      exitCode: 1
 ...
