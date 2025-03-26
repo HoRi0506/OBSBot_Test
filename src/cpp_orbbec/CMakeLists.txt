@@ -1,19 +1,20 @@
 cmake_minimum_required(VERSION 3.31.6)
 project(cpp_orbbec CXX)
 
+# C++17 표준 사용
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# vcpkg toolchain
-# CMake projects should use: "-DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake"
+# vcpkg toolchain 설정 (vcpkg 경로에 맞게 조정)
 set(CMAKE_TOOLCHAIN_FILE "C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake" CACHE STRING "VCPkg toolchain file")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# quirc 라이브러리 경로 설정
 set(quirc_DIR "C:/clone/vcpkg-master/installed/x64-windows/share/quirc")
 set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};C:/clone/vcpkg-master/installed/x64-windows")
 
-# 1. OpenCV
+# 1. OpenCV 설정
 set(OpenCV_DIR "C:/clone/vcpkg-master/installed/x64-windows/share/opencv4")
 find_package(OpenCV REQUIRED)
 if(OpenCV_FOUND)
@@ -23,7 +24,7 @@ else()
     message(FATAL_ERROR "OpenCV not found.")
 endif()
 
-# 2. Open3D
+# 2. Open3D 설정
 set(Open3D_DIR "C:/clone/open3d")
 find_package(Open3D REQUIRED CONFIG)
 if(Open3D_FOUND)
@@ -33,17 +34,17 @@ else()
     message(FATAL_ERROR "Open3D not found.")
 endif()
 
-# 3. Orbbec SDK (Azure Kinect SDK Wrapper)
+# 3. Orbbec SDK (Orbbec SDK Wrapper) 설정
 set(OrbbecSDK_DIR "C:/clone/OrbbecSDK_K4A_Wrapper_v1.10.3_windows_202408091749")
 include_directories("${OrbbecSDK_DIR}/include")
 link_directories("${OrbbecSDK_DIR}/lib")
 
-# Azure Kinect Body Tracking SDK
+# Azure Kinect Body Tracking SDK 설정
 set(AZSDK_DIR "C:/Program Files/Azure Kinect Body Tracking SDK/sdk")
 include_directories("${AZSDK_DIR}/include")
 link_directories("${AZSDK_DIR}/windows-desktop/amd64/release/lib")
 
-# 4. 소스 코드
+# 4. 소스 코드 추가
 add_executable(${PROJECT_NAME} src/main.cpp)
 
 # 5. 라이브러리 링크
@@ -55,7 +56,7 @@ target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
 )
 
-# OrbbecSDK DLL 복사
+# OrbbecSDK DLL 복사 (빌드 후 실행 파일 폴더로 복사)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${OrbbecSDK_DIR}/bin"

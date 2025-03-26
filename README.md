@@ -673,7 +673,8 @@ Orbbec Femto Mega 카메라의 3D 이미징 기능을 C++로 구현하여 보다
   # DLL 파일 복사 명령어 예시
   add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${ORBBEC_SDK_PATH}/bin" $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+    "${ORBBEC_SDK_PATH}/bin" 
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>)
   ```
   2. 수동으로 필요한 DLL 파일을 실행 파일 디렉토리로 복사:
      - OrbbecSDK.dll
@@ -806,9 +807,9 @@ OBSBOT_Test/
 - [OBSBOT OSC 명령어 참조](https://www.obsbot.co.kr/kr/explore/obsbot-center/osc)
 - [Ultralytics YOLO 문서](https://docs.ultralytics.com/ko/modes/track/#why-choose-ultralytics-yolo-for-object-tracking)
 - [Python-OSC 라이브러리](https://pypi.org/project/python-osc/)
-- [Orbbec SDK 공식 문서](https://developer.orbbec.com/technical_support.html)
+- [Orbbec SDK 공식 문서](https://orbbec.github.io/docs/OrbbecSDK_K4A_Wrapper/main/index.html)
 - [Open3D 문서](http://www.open3d.org/docs/release/)
-- [OpenCV 공식 문서](https://docs.opencv.org/)
+- [OpenCV 공식 문서](https://opencv.org/releases/)
 - [Azuru Kinect SDK Skeleton](https://ifelldh.tec.mx/sites/g/files/vgjovo1101/files/Azure%20Kinect%20DK%20Specifications.pdf)
 - [Orbbec Femto Mega Dataset](https://d1cd332k3pgc17.cloudfront.net/wp-content/uploads/2023/04/ORBBEC_Datasheet_Femto-Mega1.pdf)
 
@@ -825,7 +826,7 @@ OBSBOT_Test/
 <details>
 <summary>프로젝트 소개</summary>
 
-Orbbec Femto Mega 카메라와 Azure Kinect Body Tracking SDK를 활용하여 실시간으로 인체 스켈레톤을 추적하고 3D로 시각화하는 시스템입니다. Open3D와 OpenCV를 통해 고품질 3D 시각화 및 이미지 처리를 제공합니다.
+Orbbec Femto Mega 카메라와 Orbbec SDK, Azure Kinect Body Tracking SDK를 활용하여 실시간으로 인체 스켈레톤을 추적하고 2D, 3D로 시각화하는 시스템입니다. Open3D와 OpenCV를 통해 고품질 시각화 및 이미지 처리를 제공합니다.
 
 ### 주요 기능
 - 실시간 3D 인체 스켈레톤 추적 및 시각화
@@ -845,7 +846,7 @@ Orbbec Femto Mega 카메라와 Azure Kinect Body Tracking SDK를 활용하여 �
 <summary>하드웨어 및 소프트웨어 요구사항</summary>
 
 ### 하드웨어
-- Orbbec Femto Mega 카메라 (Azure Kinect 호환)
+- Orbbec Femto Mega 카메라
 - 64비트 Windows 운영체제를 갖춘 컴퓨터
 - 8GB 이상 RAM (16GB 권장)
 - DX11 지원 그래픽 카드
@@ -905,17 +906,17 @@ Microsoft 공식 웹사이트에서 SDK를 다운로드하여 기본 경로에 �
 # 프로젝트 루트 디렉토리에서
 mkdir build
 cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake ..
+cmake ..
 cmake --build . --config Release
 ```
 
 ### Visual Studio에서 빌드
 1. Visual Studio에서 프로젝트 열기
-2. CMake 설정에서 툴체인 파일 지정: `-DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake`
+2. CMakeLists.txt 설정에서 툴체인 파일 지정: `-DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake` (경로는 개인 설정에 따라 다를 수 있음음)
 3. 빌드 구성을 'Release'로 설정
 4. 프로젝트 빌드
 
-### 필요한 DLL 파일
+### 필요한 DLL 파일 (환경에 따라 필요한 파일이 다르거나 추가될 수 있음)
 빌드 과정에서 다음 DLL 파일들이 자동으로 복사됩니다:
 - OrbbecSDK DLL 파일들
 - Open3D.dll

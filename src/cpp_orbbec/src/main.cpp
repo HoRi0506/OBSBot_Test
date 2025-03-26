@@ -1,12 +1,12 @@
 #define NOMINMAX
-#include <k4a/k4a.h>
-#include <k4abt.h>
-#include <open3d/visualization/visualizer/VisualizerWithKeyCallback.h>
-#include <open3d/visualization/visualizer/ViewControl.h>
-#include <open3d/geometry/PointCloud.h>
-#include <open3d/geometry/LineSet.h>
-#include <open3d/geometry/TriangleMesh.h>
-#include <opencv2/opencv.hpp>
+#include <k4a/k4a.h>                              // Orbbec SDK 헤더
+#include <k4abt.h>                                // Azure Kinect Body Tracking SDK 헤더
+#include <open3d/visualization/visualizer/VisualizerWithKeyCallback.h> // Open3D 시각화 (키 콜백 포함)
+#include <open3d/visualization/visualizer/ViewControl.h>                // Open3D 뷰 컨트롤 헤더
+#include <open3d/geometry/PointCloud.h>             // Open3D 포인트 클라우드 자료형
+#include <open3d/geometry/LineSet.h>                // Open3D 선 세트 자료형
+#include <open3d/geometry/TriangleMesh.h>           // Open3D 삼각 메쉬 자료형
+#include <opencv2/opencv.hpp>                      // OpenCV 헤더 (영상 처리)
 #include <iostream>
 #include <vector>
 #include <string>
@@ -16,9 +16,13 @@
 #include <algorithm>
 
 //---------------------------------------------------------
-// Body Tracking
+// Body Tracking 관련 설정
 //---------------------------------------------------------
+
+// 전체 Body Tracking 관절 개수 (Azure Kinect Body Tracking SDK에서 정의된 값)
 static const int kNumBodyJoints = K4ABT_JOINT_COUNT;
+
+// 스켈레톤 연결 정보: 각 관절 사이를 연결할 쌍들을 정의 (예: 골반->척추 등)
 static const std::vector<std::pair<int, int>> kBodySkeletonConnection = {
     {K4ABT_JOINT_PELVIS,        K4ABT_JOINT_SPINE_NAVEL},
     {K4ABT_JOINT_SPINE_NAVEL,   K4ABT_JOINT_SPINE_CHEST},
@@ -49,37 +53,45 @@ static const std::vector<std::pair<int, int>> kBodySkeletonConnection = {
 };
 
 //---------------------------------------------------------
-// Skeleton appearance 설정 (색상, 크기 배율)
+// 스켈레톤의 외형 설정 (기본 색상, 크기 배율, 색상 프리셋 등)
 //---------------------------------------------------------
-static Eigen::Vector3d g_skelColor(1.0, 1.0, 0.0);  // 기본: 노란색
-static double g_skelSizeScale = 1.0;                // 기본 배율: 1.0
+static Eigen::Vector3d g_skelColor(1.0, 1.0, 0.0);  // 기본 스켈레톤 색상: 노란색
+static double g_skelSizeScale = 1.0;                // 스켈레톤 메쉬의 크기 배율 (기본: 1.0)
 static std::vector<Eigen::Vector3d> g_skelColorPresets = {
     {1.0, 1.0, 0.0}, // 노란색
     {1.0, 0.0, 0.0}, // 빨간색
     {0.0, 1.0, 0.0}, // 초록색
     {0.0, 0.0, 1.0}  // 파란색
 };
-static int g_currentSkelColorIndex = 0;
+static int g_currentSkelColorIndex = 0;             // 현재 사용중인 색상 인덱스
 
 //---------------------------------------------------------
-// 작은 Sphere / Cylinder를 이용해서 "굵은" 스켈레톤 Mesh 생성 유틸
+// 작은 Sphere와 Cylinder를 이용하여 스켈레톤 메쉬를 생성하는 유틸리티 함수들
 //---------------------------------------------------------
+
+// 주어진 중심과 반지름을 갖는 구(스피어) 메쉬 생성
 static std::shared_ptr<open3d::geometry::TriangleMesh>
 CreateSphereMesh(const Eigen::Vector3d &center, double radius = 0.02, int resolution = 10)
 {
+    // 스켈레톤 크기 배율을 반영하여 구 생성 후, center로 평행 이동
     auto sphere = open3d::geometry::TriangleMesh::CreateSphere(radius * g_skelSizeScale, resolution);
     sphere->Translate(center, /*relative=*/true);
     return sphere;
 }
 
+// 두 점 p1과 p2를 연결하는 원통(Cylinder) 메쉬 생성
 static std::shared_ptr<open3d::geometry::TriangleMesh>
 CreateCylinderMesh(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2, double radius = 0.01, int resolution = 20)
 {
     Eigen::Vector3d diff = p2 - p1;
     double height = diff.norm();
+    // 두 점이 거의 같은 경우 구를 생성하여 반환
     if (height < 1e-6)
         return open3d::geometry::TriangleMesh::CreateSphere(0.0);
+    // 원통 생성 (배율 적용)
     auto cyl = open3d::geometry::TriangleMesh::CreateCylinder(radius * g_skelSizeScale, height, resolution, 2);
+    
+    // 기본 원통은 z축 방향이므로, 두 점의 방향에 맞게 회전시킴
     Eigen::Vector3d axisZ(0, 0, 1);
     Eigen::Vector3d axisNew = diff.normalized();
     Eigen::Vector3d cross = axisZ.cross(axisNew);
@@ -89,25 +101,30 @@ CreateCylinderMesh(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2, double 
         double angle = std::acos(axisZ.dot(axisNew));
         cyl->Rotate(Eigen::AngleAxisd(angle, cross).toRotationMatrix(), Eigen::Vector3d(0, 0, 0));
     }
+    // 원통을 시작점 p1로 평행 이동
     cyl->Translate(p1, /*relative=*/true);
     return cyl;
 }
 
 //---------------------------------------------------------
-// Skeleton Mesh 생성 (각 관절마다 Sphere, 연결마다 Cylinder)
+// 관절 좌표들을 바탕으로 스켈레톤 메쉬를 생성하는 함수
+// 각 관절에 대해 구(Sphere)를 생성하고, 연결 관계에 따라 원통(Cylinder)을 생성하여 합침
 //---------------------------------------------------------
 static std::shared_ptr<open3d::geometry::TriangleMesh>
 CreateSkeletonMesh(const std::vector<Eigen::Vector3d> &joints3D)
 {
     using namespace open3d::geometry;
     auto skeletonMesh = std::make_shared<TriangleMesh>();
+    
+    // 각 관절 위치에 구를 생성하여 스켈레톤 메쉬에 추가
     for (size_t j = 0; j < joints3D.size(); j++) {
         if (joints3D[j].norm() < 1e-6)
             continue;
         auto sphere = CreateSphereMesh(joints3D[j], /*radius=*/0.02);
-        sphere->PaintUniformColor(g_skelColor);
+        sphere->PaintUniformColor(g_skelColor); // 구에 기본 색상 적용
         *skeletonMesh += *sphere;
     }
+    // 관절 사이 연결 정보를 바탕으로 원통을 생성하여 메쉬에 추가
     for (auto &conn : kBodySkeletonConnection) {
         int i1 = conn.first, i2 = conn.second;
         if (i1 < (int)joints3D.size() && i2 < (int)joints3D.size()) {
@@ -123,10 +140,15 @@ CreateSkeletonMesh(const std::vector<Eigen::Vector3d> &joints3D)
     return skeletonMesh;
 }
 
+//---------------------------------------------------------
+// Open3D Visualizer 확장 클래스 (키 입력 처리 포함)
+//---------------------------------------------------------
 class MyVisualizer : public open3d::visualization::VisualizerWithKeyCallback {
 public:
     MyVisualizer() : exit_flag_(false) {}
+    // 종료 플래그 반환
     bool ShouldExit() const { return exit_flag_; }
+    // ESC 키 입력시 종료하도록 콜백 등록
     void RegisterExitKey() {
         RegisterKeyCallback(GLFW_KEY_ESCAPE, [this](open3d::visualization::Visualizer*) -> bool {
             exit_flag_ = true;
@@ -138,31 +160,40 @@ private:
 };
 
 //---------------------------------------------------------
-// 전역 변수 (FOV 모드 선택 관련)
+// 전역 변수 (카메라 FOV 모드, 영상 사용 여부 등)
 //---------------------------------------------------------
-// g_fovMode: 1 - NFOV Unbinned (640×576), 2 - WFOV Unbinned (1024×1024),
-//            3 - WFOV Binned (512×512), 4 - NFOV 2x2 Binned (320×288)
-static int g_fovMode = 1;
-static bool g_useColor = true;    // 항상 사용
-static bool g_useDepth = true;    // 항상 사용
-static bool g_usePointCloud = false;
-static int g_fovWidth = 640;      // 기본 해상도
-static int g_fovHeight = 576;     // 기본 해상도
 
+// FOV 모드 선택 변수 (1: NFOV Unbinned, 2: WFOV Unbinned, 3: WFOV Binned, 4: NFOV 2x2 Binned)
+static int g_fovMode = 1;
+// 컬러와 Depth 영상 사용 여부 (항상 사용하도록 설정)
+static bool g_useColor = true;
+static bool g_useDepth = true;
+// 포인트 클라우드 시각화 사용 여부
+static bool g_usePointCloud = false;
+
+// 선택한 FOV 모드에 따른 해상도 (기본 값: NFOV Unbinned 640x576)
+static int g_fovWidth = 640;
+static int g_fovHeight = 576;
+
+// Azure Kinect 디바이스, 변환, 바디 트래커 관련 변수
 static k4a_device_t g_device = nullptr;
 static k4a_transformation_t g_transform = nullptr;
 static k4abt_tracker_t g_tracker = nullptr;
 
+// Open3D 시각화 관련 전역 변수
 static MyVisualizer g_vis;
 static std::shared_ptr<open3d::geometry::PointCloud> g_pcPtr;
 static std::shared_ptr<open3d::geometry::TriangleMesh> g_skelMesh;
 
+// 컬러와 Depth 영상이 결합되어 보여질 창 이름
 static std::string g_combinedWin = "Color&Depth";
+
+// 포인트 클라우드 및 바디가 처음 업데이트 되었는지 여부 플래그
 static bool g_firstCloud = true;
 static bool g_firstBodyDetected = false;
 
 //---------------------------------------------------------
-// 그리드 생성 함수
+// 그리드(LineSet) 생성 함수 (배경에 표시할 격자)
 //---------------------------------------------------------
 static std::shared_ptr<open3d::geometry::LineSet> CreateGridLineSet(int gridSize = 10, float step = 1.0f)
 {
@@ -171,6 +202,7 @@ static std::shared_ptr<open3d::geometry::LineSet> CreateGridLineSet(int gridSize
     std::vector<Eigen::Vector3d> pts;
     std::vector<Eigen::Vector2i> lns;
     int idx = 0;
+    // x축 방향 선 생성
     for (int x = -gridSize; x <= gridSize; x++) {
         Eigen::Vector3d p1(x * step, 0.0, -gridSize * step);
         Eigen::Vector3d p2(x * step, 0.0, gridSize * step);
@@ -179,6 +211,7 @@ static std::shared_ptr<open3d::geometry::LineSet> CreateGridLineSet(int gridSize
         lns.push_back({ idx * 2, idx * 2 + 1 });
         idx++;
     }
+    // z축 방향 선 생성
     for (int z = -gridSize; z <= gridSize; z++) {
         Eigen::Vector3d p1(-gridSize * step, 0.0, z * step);
         Eigen::Vector3d p2(gridSize * step, 0.0, z * step);
@@ -189,10 +222,15 @@ static std::shared_ptr<open3d::geometry::LineSet> CreateGridLineSet(int gridSize
     }
     ls->points_ = pts;
     ls->lines_ = lns;
+    // 그리드 색상 (회색 계열) 적용
     ls->PaintUniformColor({ 0.6, 0.6, 0.6 });
     return ls;
 }
 
+//---------------------------------------------------------
+// Open3D 시각화 창 재생성 함수
+// FOV 모드에 따라 창 크기 및 내부 Open3D 객체들을 다시 생성
+//---------------------------------------------------------
 static bool RecreateVisualizerWindow(MyVisualizer &vis)
 {
     using namespace open3d::visualization;
@@ -219,6 +257,10 @@ static bool RecreateVisualizerWindow(MyVisualizer &vis)
     return true;
 }
 
+//---------------------------------------------------------
+// 불필요한 캡처 프레임 제거 함수
+// (버퍼에 남은 프레임들을 반복적으로 제거)
+//---------------------------------------------------------
 static void DrainExtraFrames()
 {
     while (true) {
@@ -231,12 +273,18 @@ static void DrainExtraFrames()
     }
 }
 
+//---------------------------------------------------------
+// Orbbec SDK 디바이스 및 관련 객체 초기화 함수
+// 카메라 설정, 캘리브레이션, 트래커 생성 등을 수행
+//---------------------------------------------------------
 bool InitializeAll()
 {
+    // 디바이스 열기
     if (K4A_FAILED(k4a_device_open(K4A_DEVICE_DEFAULT, &g_device))) {
         std::cerr << "device_open fail.\n";
         return false;
     }
+    // 기본 디바이스 설정 (모든 기능 비활성화 후 필요한 항목만 활성화)
     k4a_device_configuration_t cfg = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
     if (g_useColor) {
         cfg.color_format = K4A_IMAGE_FORMAT_COLOR_BGRA32;
@@ -245,6 +293,7 @@ bool InitializeAll()
         cfg.color_resolution = K4A_COLOR_RESOLUTION_OFF;
     }
     if (g_useDepth) {
+        // 선택된 FOV 모드에 따른 Depth 모드 설정
         if (g_fovMode == 1)
             cfg.depth_mode = K4A_DEPTH_MODE_NFOV_UNBINNED;         // NFOV Unbinned: 640×576
         else if (g_fovMode == 2)
@@ -258,12 +307,16 @@ bool InitializeAll()
     }
     cfg.camera_fps = K4A_FRAMES_PER_SECOND_15;
     cfg.synchronized_images_only = true;
+    
+    // 카메라 시작
     if (K4A_FAILED(k4a_device_start_cameras(g_device, &cfg))) {
         std::cerr << "start_cameras fail.\n";
         k4a_device_close(g_device);
         g_device = nullptr;
         return false;
     }
+    
+    // 컬러 또는 Depth 사용 시 캘리브레이션 및 트래커 생성
     if (g_useColor || g_useDepth) {
         k4a_calibration_t cal;
         k4a_depth_mode_t selected_mode = (g_fovMode == 1 ? K4A_DEPTH_MODE_NFOV_UNBINNED :
@@ -282,11 +335,13 @@ bool InitializeAll()
             return false;
         }
     }
+    
     // 단일 "Color&Depth" 창 생성 (좌우 결합)
     if (g_useColor && g_useDepth) {
         cv::namedWindow(g_combinedWin, cv::WINDOW_NORMAL);
         cv::resizeWindow(g_combinedWin, g_fovWidth * 2, g_fovHeight);
     }
+    // 포인트 클라우드 시각화 사용 시 Open3D 창 생성
     if (g_usePointCloud) {
         int pcWidth, pcHeight;
         if (g_fovMode == 1) { pcWidth = 640; pcHeight = 576; }
@@ -312,6 +367,9 @@ bool InitializeAll()
     return true;
 }
 
+//---------------------------------------------------------
+// 자원 해제 함수: 디바이스, 트래커, 변환 객체, Open3D 창 등 모두 정리
+//---------------------------------------------------------
 void FinalizeAll()
 {
     if (g_usePointCloud) {
@@ -334,6 +392,9 @@ void FinalizeAll()
     cv::destroyWindow(g_combinedWin);
 }
 
+//---------------------------------------------------------
+// 색상과 Depth 영상을 정렬하여 출력 이미지 생성 함수
+//---------------------------------------------------------
 static k4a_image_t CreateAlignedColorImage(
     k4a_transformation_t transform,
     k4a_image_t depthImg,
@@ -354,10 +415,14 @@ static k4a_image_t CreateAlignedColorImage(
     return nullptr;
 }
 
+//---------------------------------------------------------
+// Depth 영상 위에 2D Body Skeleton을 그리는 함수 (OpenCV 사용)
+//---------------------------------------------------------
 static void DrawBody2DOnDepth(cv::Mat &depthVis,
     const k4abt_skeleton_t &skeleton,
     const k4a_calibration_t &cal)
 {
+    // 관절 간 선 그리기
     for (auto &conn : kBodySkeletonConnection) {
         k4a_float2_t p1, p2; int v1 = 0, v2 = 0;
         k4a_calibration_3d_to_2d(&cal, &skeleton.joints[conn.first].position,
@@ -369,6 +434,7 @@ static void DrawBody2DOnDepth(cv::Mat &depthVis,
                      { int(p2.xy.x), int(p2.xy.y) }, cv::Scalar(255), 2);
         }
     }
+    // 각 관절에 원(circle) 그리기
     for (int j = 0; j < kNumBodyJoints; j++) {
         k4a_float2_t p2d; int valid = 0;
         k4a_calibration_3d_to_2d(&cal, &skeleton.joints[j].position,
@@ -380,10 +446,16 @@ static void DrawBody2DOnDepth(cv::Mat &depthVis,
     }
 }
 
+//---------------------------------------------------------
+// main 함수: 프로그램의 진입점
+// 사용자로부터 FOV 모드 및 포인트 클라우드 사용 여부를 입력받아
+// Orbbec SDK를 초기화하고, 영상 처리 및 Azure Kinect Body Tracking, 시각화 작업을 수행함
+//---------------------------------------------------------
 int main()
 {
-    // FOV 모드 선택: 1 - NFOV Unbinned (640x576), 2 - WFOV Unbinned (1024x1024),
-    //              3 - WFOV Binned (512x512), 4 - NFOV 2x2 Binned (320x288)
+    // FOV 모드 선택 메뉴 출력
+    // 1: NFOV Unbinned (640x576), 2: WFOV Unbinned (1024x1024),
+    // 3: WFOV Binned (512x512), 4: NFOV 2x2 Binned (320x288)
     std::cout << "Select FOV mode:\n"
               << " 1: NFOV Unbinned (640x576)\n"
               << " 2: WFOV Unbinned (1024x1024)\n"
@@ -408,10 +480,11 @@ int main()
         g_fovWidth = 640;
         g_fovHeight = 576;
     }
-    // color와 depth는 항상 사용
+    // 컬러와 Depth 영상은 항상 사용
     g_useColor = true;
     g_useDepth = true;
     
+    // 포인트 클라우드 사용 여부 입력 받음
     std::cout << "Use PointCloud? (y/n): ";
     {
         std::string s;
@@ -420,7 +493,7 @@ int main()
             g_usePointCloud = true;
     }
     
-    // point cloud 창이 사용되지 않을 경우, g_vis 관련 함수 호출은 전혀 발생하지 않도록 함
+    // 포인트 클라우드 창이 사용되지 않는 경우 관련 함수 호출하지 않도록 처리
 RESTART_ALL:
     if (!InitializeAll()) {
         std::cerr << "init fail.\n";
@@ -429,6 +502,7 @@ RESTART_ALL:
     
     bool quit = false;
     while (!quit) {
+        // 포인트 클라우드 창 업데이트 (사용 중이면 이벤트 처리)
         if (g_usePointCloud) {
             g_vis.PollEvents();
             if (g_vis.ShouldExit())
@@ -445,10 +519,11 @@ RESTART_ALL:
         }
         if (!cap)
             continue;
+        // Depth와 Color 이미지 가져오기
         k4a_image_t depthImg = (g_useDepth) ? k4a_capture_get_depth_image(cap) : nullptr;
         k4a_image_t colorImg = (g_useColor) ? k4a_capture_get_color_image(cap) : nullptr;
         
-        // Depth 이미지 처리
+        //--------------- Depth 이미지 처리 ---------------
         cv::Mat dv;
         if (depthImg) {
             int dw = k4a_image_get_width_pixels(depthImg);
@@ -456,6 +531,7 @@ RESTART_ALL:
             uint16_t* dptr = (uint16_t*)k4a_image_get_buffer(depthImg);
             cv::Mat dmat(dh, dw, CV_16UC1, dptr);
             dv = cv::Mat(dh, dw, CV_8UC1);
+            // 각 픽셀 값에 대해 범위 조정 (4000 초과 시 255, 그 외는 16으로 나눔)
             for (int rr = 0; rr < dh; rr++) {
                 for (int cc = 0; cc < dw; cc++) {
                     uint16_t v = dmat.at<uint16_t>(rr, cc);
@@ -464,7 +540,7 @@ RESTART_ALL:
             }
         }
         
-        // Color 이미지 처리
+        //--------------- Color 이미지 처리 ---------------
         cv::Mat showColor;
         if (g_useColor && colorImg) {
             int cw = k4a_image_get_width_pixels(colorImg);
@@ -473,11 +549,13 @@ RESTART_ALL:
             uint8_t* cbuf = (uint8_t*)k4a_image_get_buffer(colorImg);
             cv::Mat colorBGRA(ch, cw, CV_8UC4, (void*)cbuf, cstride);
             cv::Mat colorBGR;
+            // BGRA -> BGR로 색상 변환
             cv::cvtColor(colorBGRA, colorBGR, cv::COLOR_BGRA2BGR);
+            // 선택된 FOV 모드 해상도에 맞게 리사이즈
             cv::resize(colorBGR, showColor, { g_fovWidth, g_fovHeight });
         }
         
-        // Body Tracking 및 Skeleton 생성
+        //--------------- Body Tracking 및 Skeleton 생성 ---------------
         if (g_tracker && cap) {
             if (K4A_FAILED(k4abt_tracker_enqueue_capture(g_tracker, cap, 0)))
                 std::cerr << "tracker_enqueue fail.\n";
@@ -491,6 +569,7 @@ RESTART_ALL:
                         if (g_skelMesh)
                             g_skelMesh->Clear();
                     }
+                    // 각 인식된 Body에 대해 Skeleton 처리
                     for (size_t i = 0; i < numBodies; i++) {
                         k4abt_skeleton_t skeleton;
                         k4abt_frame_get_body_skeleton(bodyFrame, i, &skeleton);
@@ -502,9 +581,11 @@ RESTART_ALL:
                                 selected_mode,
                                 K4A_COLOR_RESOLUTION_720P, &calibration))
                         {
+                            // 2D로 Body Skeleton 그리기
                             DrawBody2DOnDepth(dvCopy, skeleton, calibration);
                         }
                         
+                        // 왼손, 오른손의 거리 및 좌표 정보 표시
                         {
                             int leftHandIndex = 8;
                             k4a_float2_t leftHand2d;
@@ -549,6 +630,7 @@ RESTART_ALL:
                                             cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255), 2);
                             }
                         }
+                        // 3D 좌표로 스켈레톤 메쉬 생성
                         std::vector<Eigen::Vector3d> j3d(kNumBodyJoints, { 0, 0, 0 });
                         for (int j = 0; j < kNumBodyJoints; j++) {
                             k4a_float3_t pos = skeleton.joints[j].position;
@@ -558,9 +640,10 @@ RESTART_ALL:
                             j3d[j] = { X, Y, Z };
                         }
                         auto newMesh = CreateSkeletonMesh(j3d);
-                        if (g_usePointCloud)  // point cloud 관련 mesh는 g_vis가 있을 때만 업데이트
+                        if (g_usePointCloud)  // 포인트 클라우드 관련 메쉬 업데이트
                             *g_skelMesh += *newMesh;
                     }
+                    // Depth 영상 및 Color 영상을 결합하여 출력
                     cv::Mat showDepth;
                     cv::resize(dvCopy, showDepth, { g_fovWidth, g_fovHeight });
                     cv::Mat showDepthColor;
@@ -584,6 +667,7 @@ RESTART_ALL:
             }
         }
         
+        //--------------- 포인트 클라우드 생성 (Depth 이미지 기반) ---------------
         if (depthImg && g_usePointCloud && g_transform) {
             int dw = k4a_image_get_width_pixels(depthImg);
             int dh = k4a_image_get_height_pixels(depthImg);
@@ -622,6 +706,7 @@ RESTART_ALL:
             }
         }
         
+        // 이미지 및 캡처 객체 해제
         if (colorImg)
             k4a_image_release(colorImg);
         if (depthImg)
@@ -629,6 +714,7 @@ RESTART_ALL:
         k4a_capture_release(cap);
         DrainExtraFrames();
         
+        // 키 입력 처리: 'q' 또는 ESC면 종료, 'r'면 포인트 클라우드 창 리셋, 'd'면 재초기화
         int key = cv::waitKey(1);
         if (key == 27 || key == 'q' || key == 'Q') {
             quit = true;
