@@ -1,12 +1,12 @@
 #define NOMINMAX
-#include <k4a/k4a.h>                              // Orbbec SDK 헤더
-#include <k4abt.h>                                // Azure Kinect Body Tracking SDK 헤더
-#include <open3d/visualization/visualizer/VisualizerWithKeyCallback.h> // Open3D 시각화 (키 콜백 포함)
-#include <open3d/visualization/visualizer/ViewControl.h>                // Open3D 뷰 컨트롤 헤더
-#include <open3d/geometry/PointCloud.h>             // Open3D 포인트 클라우드 자료형
-#include <open3d/geometry/LineSet.h>                // Open3D 선 세트 자료형
-#include <open3d/geometry/TriangleMesh.h>           // Open3D 삼각 메쉬 자료형
-#include <opencv2/opencv.hpp>                      // OpenCV 헤더 (영상 처리)
+#include <k4a/k4a.h>
+#include <k4abt.h>
+#include <open3d/visualization/visualizer/VisualizerWithKeyCallback.h>
+#include <open3d/visualization/visualizer/ViewControl.h>
+#include <open3d/geometry/PointCloud.h>
+#include <open3d/geometry/LineSet.h>
+#include <open3d/geometry/TriangleMesh.h>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -14,86 +14,103 @@
 #include <thread>
 #include <cmath>
 #include <algorithm>
+#include <deque>
+#include <map>
 
-//---------------------------------------------------------
 // Body Tracking 관련 설정
-//---------------------------------------------------------
-
-// 전체 Body Tracking 관절 개수 (Azure Kinect Body Tracking SDK에서 정의된 값)
 static const int kNumBodyJoints = K4ABT_JOINT_COUNT;
 
-// 스켈레톤 연결 정보: 각 관절 사이를 연결할 쌍들을 정의 (예: 골반->척추 등)
 static const std::vector<std::pair<int, int>> kBodySkeletonConnection = {
-    {K4ABT_JOINT_PELVIS,        K4ABT_JOINT_SPINE_NAVEL},
-    {K4ABT_JOINT_SPINE_NAVEL,   K4ABT_JOINT_SPINE_CHEST},
-    {K4ABT_JOINT_SPINE_CHEST,   K4ABT_JOINT_NECK},
-    {K4ABT_JOINT_NECK,          K4ABT_JOINT_HEAD},
-
-    {K4ABT_JOINT_SPINE_CHEST,   K4ABT_JOINT_CLAVICLE_LEFT},
-    {K4ABT_JOINT_CLAVICLE_LEFT, K4ABT_JOINT_SHOULDER_LEFT},
-    {K4ABT_JOINT_SHOULDER_LEFT, K4ABT_JOINT_ELBOW_LEFT},
-    {K4ABT_JOINT_ELBOW_LEFT,    K4ABT_JOINT_WRIST_LEFT},
-    {K4ABT_JOINT_WRIST_LEFT,    K4ABT_JOINT_HAND_LEFT},
-
-    {K4ABT_JOINT_SPINE_CHEST,   K4ABT_JOINT_CLAVICLE_RIGHT},
-    {K4ABT_JOINT_CLAVICLE_RIGHT,K4ABT_JOINT_SHOULDER_RIGHT},
-    {K4ABT_JOINT_SHOULDER_RIGHT,K4ABT_JOINT_ELBOW_RIGHT},
-    {K4ABT_JOINT_ELBOW_RIGHT,   K4ABT_JOINT_WRIST_RIGHT},
-    {K4ABT_JOINT_WRIST_RIGHT,   K4ABT_JOINT_HAND_RIGHT},
-
-    {K4ABT_JOINT_PELVIS,        K4ABT_JOINT_HIP_LEFT},
-    {K4ABT_JOINT_HIP_LEFT,      K4ABT_JOINT_KNEE_LEFT},
-    {K4ABT_JOINT_KNEE_LEFT,     K4ABT_JOINT_ANKLE_LEFT},
-    {K4ABT_JOINT_ANKLE_LEFT,    K4ABT_JOINT_FOOT_LEFT},
-
-    {K4ABT_JOINT_PELVIS,        K4ABT_JOINT_HIP_RIGHT},
-    {K4ABT_JOINT_HIP_RIGHT,     K4ABT_JOINT_KNEE_RIGHT},
-    {K4ABT_JOINT_KNEE_RIGHT,    K4ABT_JOINT_ANKLE_RIGHT},
-    {K4ABT_JOINT_ANKLE_RIGHT,   K4ABT_JOINT_FOOT_RIGHT},
+    {K4ABT_JOINT_PELVIS, K4ABT_JOINT_SPINE_NAVEL}, {K4ABT_JOINT_SPINE_NAVEL, K4ABT_JOINT_SPINE_CHEST},
+    {K4ABT_JOINT_SPINE_CHEST, K4ABT_JOINT_NECK},    {K4ABT_JOINT_NECK, K4ABT_JOINT_HEAD},
+    {K4ABT_JOINT_SPINE_CHEST, K4ABT_JOINT_CLAVICLE_LEFT}, {K4ABT_JOINT_CLAVICLE_LEFT, K4ABT_JOINT_SHOULDER_LEFT},
+    {K4ABT_JOINT_SHOULDER_LEFT, K4ABT_JOINT_ELBOW_LEFT},  {K4ABT_JOINT_ELBOW_LEFT, K4ABT_JOINT_WRIST_LEFT},
+    {K4ABT_JOINT_WRIST_LEFT, K4ABT_JOINT_HAND_LEFT},       {K4ABT_JOINT_SPINE_CHEST, K4ABT_JOINT_CLAVICLE_RIGHT},
+    {K4ABT_JOINT_CLAVICLE_RIGHT, K4ABT_JOINT_SHOULDER_RIGHT}, {K4ABT_JOINT_SHOULDER_RIGHT, K4ABT_JOINT_ELBOW_RIGHT},
+    {K4ABT_JOINT_ELBOW_RIGHT, K4ABT_JOINT_WRIST_RIGHT},       {K4ABT_JOINT_WRIST_RIGHT, K4ABT_JOINT_HAND_RIGHT},
+    {K4ABT_JOINT_PELVIS, K4ABT_JOINT_HIP_LEFT}, {K4ABT_JOINT_HIP_LEFT, K4ABT_JOINT_KNEE_LEFT},
+    {K4ABT_JOINT_KNEE_LEFT, K4ABT_JOINT_ANKLE_LEFT}, {K4ABT_JOINT_ANKLE_LEFT, K4ABT_JOINT_FOOT_LEFT},
+    {K4ABT_JOINT_PELVIS, K4ABT_JOINT_HIP_RIGHT}, {K4ABT_JOINT_HIP_RIGHT, K4ABT_JOINT_KNEE_RIGHT},
+    {K4ABT_JOINT_KNEE_RIGHT, K4ABT_JOINT_ANKLE_RIGHT}, {K4ABT_JOINT_ANKLE_RIGHT, K4ABT_JOINT_FOOT_RIGHT},
 };
 
-//---------------------------------------------------------
-// 스켈레톤의 외형 설정 (기본 색상, 크기 배율, 색상 프리셋 등)
-//---------------------------------------------------------
-static Eigen::Vector3d g_skelColor(1.0, 1.0, 0.0);  // 기본 스켈레톤 색상: 노란색
-static double g_skelSizeScale = 1.0;                // 스켈레톤 메쉬의 크기 배율 (기본: 1.0)
+// 스켈레톤 외형 설정
+static double g_skelSizeScale = 1.0;
 static std::vector<Eigen::Vector3d> g_skelColorPresets = {
-    {1.0, 1.0, 0.0}, // 노란색
-    {1.0, 0.0, 0.0}, // 빨간색
-    {0.0, 1.0, 0.0}, // 초록색
-    {0.0, 0.0, 1.0}  // 파란색
+    {1.0, 0.0, 0.0}, // 빨강
+    {0.0, 1.0, 0.0}, // 초록
+    {0.0, 0.0, 1.0}, // 파랑
+    {1.0, 1.0, 0.0}, // 노랑
+    {1.0, 0.0, 1.0}  // 자홍
 };
-static int g_currentSkelColorIndex = 0;             // 현재 사용중인 색상 인덱스
 
-//---------------------------------------------------------
-// 작은 Sphere와 Cylinder를 이용하여 스켈레톤 메쉬를 생성하는 유틸리티 함수들
-//---------------------------------------------------------
+// 센서 방향 및 회전 행렬 전역 변수
+static k4abt_sensor_orientation_t g_sensorOrientation = K4ABT_SENSOR_ORIENTATION_FLIP180;
+static Eigen::Matrix3d g_rotationMatrix;
 
-// 주어진 중심과 반지름을 갖는 구(스피어) 메쉬 생성
+// 함수 선언: RotateText
+static cv::Mat RotateText(const std::string &text, double angle, cv::Scalar color, double scale, int thickness);
+
+// 회전 행렬 계산 함수
+static Eigen::Matrix3d GetRotationMatrix(k4abt_sensor_orientation_t orientation) {
+    Eigen::Matrix3d R;
+    switch (orientation) {
+    case K4ABT_SENSOR_ORIENTATION_DEFAULT:
+        R.setIdentity();
+        break;
+    case K4ABT_SENSOR_ORIENTATION_CLOCKWISE90:
+        R << 0, 1, 0,
+             -1, 0, 0,
+              0, 0, 1;
+        break;
+    case K4ABT_SENSOR_ORIENTATION_COUNTERCLOCKWISE90:
+        R << 0, -1, 0,
+             1, 0, 0,
+             0, 0, 1;
+        break;
+    case K4ABT_SENSOR_ORIENTATION_FLIP180:
+        R << -1, 0, 0,
+              0, -1, 0,
+              0, 0, 1;
+        break;
+    default:
+        R.setIdentity();
+        break;
+    }
+    return R;
+}
+
+// OpenCV 회전 코드 계산 함수
+static int GetRotationCode(k4abt_sensor_orientation_t orientation) {
+    switch (orientation) {
+    case K4ABT_SENSOR_ORIENTATION_DEFAULT:
+        return -1; // 회전 없음
+    case K4ABT_SENSOR_ORIENTATION_CLOCKWISE90:
+        return cv::ROTATE_90_COUNTERCLOCKWISE;
+    case K4ABT_SENSOR_ORIENTATION_COUNTERCLOCKWISE90:
+        return cv::ROTATE_90_CLOCKWISE;
+    case K4ABT_SENSOR_ORIENTATION_FLIP180:
+        return cv::ROTATE_180;
+    default:
+        return -1;
+    }
+}
+
+// 스켈레톤 메쉬 생성 유틸리티 함수
 static std::shared_ptr<open3d::geometry::TriangleMesh>
-CreateSphereMesh(const Eigen::Vector3d &center, double radius = 0.02, int resolution = 10)
-{
-    // 스켈레톤 크기 배율을 반영하여 구 생성 후, center로 평행 이동
+CreateSphereMesh(const Eigen::Vector3d &center, double radius = 0.02, int resolution = 10) {
     auto sphere = open3d::geometry::TriangleMesh::CreateSphere(radius * g_skelSizeScale, resolution);
-    sphere->Translate(center, /*relative=*/true);
+    sphere->Translate(center, true);
     return sphere;
 }
 
-// 두 점 p1과 p2를 연결하는 원통(Cylinder) 메쉬 생성
 static std::shared_ptr<open3d::geometry::TriangleMesh>
-CreateCylinderMesh(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2, double radius = 0.01, int resolution = 20)
-{
+CreateCylinderMesh(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2, double radius = 0.01, int resolution = 20) {
     Eigen::Vector3d diff = p2 - p1;
     double height = diff.norm();
-    // 두 점이 거의 같은 경우 구를 생성하여 반환
-    if (height < 1e-6)
-        return open3d::geometry::TriangleMesh::CreateSphere(0.0);
-    // 원통 생성 (배율 적용)
+    if (height < 1e-6) return open3d::geometry::TriangleMesh::CreateSphere(0.0);
     auto cyl = open3d::geometry::TriangleMesh::CreateCylinder(radius * g_skelSizeScale, height, resolution, 2);
-    
-    // 기본 원통은 z축 방향이므로, 두 점의 방향에 맞게 회전시킴
-    Eigen::Vector3d axisZ(0, 0, 1);
-    Eigen::Vector3d axisNew = diff.normalized();
+    Eigen::Vector3d axisZ(0, 0, 1), axisNew = diff.normalized();
     Eigen::Vector3d cross = axisZ.cross(axisNew);
     double c_norm = cross.norm();
     if (c_norm > 1e-6) {
@@ -101,54 +118,38 @@ CreateCylinderMesh(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2, double 
         double angle = std::acos(axisZ.dot(axisNew));
         cyl->Rotate(Eigen::AngleAxisd(angle, cross).toRotationMatrix(), Eigen::Vector3d(0, 0, 0));
     }
-    // 원통을 시작점 p1로 평행 이동
-    cyl->Translate(p1, /*relative=*/true);
+    cyl->Translate(p1, true);
     return cyl;
 }
 
-//---------------------------------------------------------
-// 관절 좌표들을 바탕으로 스켈레톤 메쉬를 생성하는 함수
-// 각 관절에 대해 구(Sphere)를 생성하고, 연결 관계에 따라 원통(Cylinder)을 생성하여 합침
-//---------------------------------------------------------
+// 색상을 인자로 받아 각 사람별로 다른 색상 적용
 static std::shared_ptr<open3d::geometry::TriangleMesh>
-CreateSkeletonMesh(const std::vector<Eigen::Vector3d> &joints3D)
-{
-    using namespace open3d::geometry;
-    auto skeletonMesh = std::make_shared<TriangleMesh>();
-    
-    // 각 관절 위치에 구를 생성하여 스켈레톤 메쉬에 추가
+CreateSkeletonMesh(const std::vector<Eigen::Vector3d> &joints3D, const Eigen::Vector3d &color) {
+    auto skeletonMesh = std::make_shared<open3d::geometry::TriangleMesh>();
     for (size_t j = 0; j < joints3D.size(); j++) {
-        if (joints3D[j].norm() < 1e-6)
-            continue;
-        auto sphere = CreateSphereMesh(joints3D[j], /*radius=*/0.02);
-        sphere->PaintUniformColor(g_skelColor); // 구에 기본 색상 적용
+        if (joints3D[j].norm() < 1e-6) continue;
+        auto sphere = CreateSphereMesh(joints3D[j], 0.02);
+        sphere->PaintUniformColor(color);
         *skeletonMesh += *sphere;
     }
-    // 관절 사이 연결 정보를 바탕으로 원통을 생성하여 메쉬에 추가
     for (auto &conn : kBodySkeletonConnection) {
         int i1 = conn.first, i2 = conn.second;
         if (i1 < (int)joints3D.size() && i2 < (int)joints3D.size()) {
-            Eigen::Vector3d p1 = joints3D[i1];
-            Eigen::Vector3d p2 = joints3D[i2];
-            if (p1.norm() < 1e-6 || p2.norm() < 1e-6)
-                continue;
-            auto cyl = CreateCylinderMesh(p1, p2, /*radius=*/0.01);
-            cyl->PaintUniformColor(g_skelColor);
+            Eigen::Vector3d p1 = joints3D[i1], p2 = joints3D[i2];
+            if (p1.norm() < 1e-6 || p2.norm() < 1e-6) continue;
+            auto cyl = CreateCylinderMesh(p1, p2, 0.01);
+            cyl->PaintUniformColor(color);
             *skeletonMesh += *cyl;
         }
     }
     return skeletonMesh;
 }
 
-//---------------------------------------------------------
-// Open3D Visualizer 확장 클래스 (키 입력 처리 포함)
-//---------------------------------------------------------
+// Open3D Visualizer 확장 클래스
 class MyVisualizer : public open3d::visualization::VisualizerWithKeyCallback {
 public:
     MyVisualizer() : exit_flag_(false) {}
-    // 종료 플래그 반환
     bool ShouldExit() const { return exit_flag_; }
-    // ESC 키 입력시 종료하도록 콜백 등록
     void RegisterExitKey() {
         RegisterKeyCallback(GLFW_KEY_ESCAPE, [this](open3d::visualization::Visualizer*) -> bool {
             exit_flag_ = true;
@@ -159,90 +160,58 @@ private:
     bool exit_flag_;
 };
 
-//---------------------------------------------------------
-// 전역 변수 (카메라 FOV 모드, 영상 사용 여부 등)
-//---------------------------------------------------------
-
-// FOV 모드 선택 변수 (1: NFOV Unbinned, 2: WFOV Unbinned, 3: WFOV Binned, 4: NFOV 2x2 Binned)
+// 전역 변수
 static int g_fovMode = 1;
-// 컬러와 Depth 영상 사용 여부 (항상 사용하도록 설정)
-static bool g_useColor = true;
-static bool g_useDepth = true;
-// 포인트 클라우드 시각화 사용 여부
-static bool g_usePointCloud = false;
-
-// 선택한 FOV 모드에 따른 해상도 (기본 값: NFOV Unbinned 640x576)
-static int g_fovWidth = 640;
-static int g_fovHeight = 576;
-
-// Azure Kinect 디바이스, 변환, 바디 트래커 관련 변수
+static bool g_useColor = true, g_useDepth = true, g_usePointCloud = false;
+static int g_fovWidth = 640, g_fovHeight = 576;
 static k4a_device_t g_device = nullptr;
 static k4a_transformation_t g_transform = nullptr;
 static k4abt_tracker_t g_tracker = nullptr;
-
-// Open3D 시각화 관련 전역 변수
 static MyVisualizer g_vis;
 static std::shared_ptr<open3d::geometry::PointCloud> g_pcPtr;
 static std::shared_ptr<open3d::geometry::TriangleMesh> g_skelMesh;
-
-// 컬러와 Depth 영상이 결합되어 보여질 창 이름
 static std::string g_combinedWin = "Color&Depth";
+static bool g_firstCloud = true, g_firstBodyDetected = false;
+static bool g_showHandInfo = false; // 손목 정보 표시 여부
 
-// 포인트 클라우드 및 바디가 처음 업데이트 되었는지 여부 플래그
-static bool g_firstCloud = true;
-static bool g_firstBodyDetected = false;
+// ID 기반 스켈레톤 버퍼와 색상 매핑
+static const size_t kFrameBufferSize = 3; // 평균을 낼 프레임 수
+static std::map<uint32_t, std::deque<k4abt_skeleton_t>> g_skeletonBuffers; // ID -> deque
+static std::map<uint32_t, Eigen::Vector3d> g_idToColor; // ID -> 색상
 
-//---------------------------------------------------------
-// 그리드(LineSet) 생성 함수 (배경에 표시할 격자)
-//---------------------------------------------------------
-static std::shared_ptr<open3d::geometry::LineSet> CreateGridLineSet(int gridSize = 10, float step = 1.0f)
-{
-    using namespace open3d::geometry;
-    auto ls = std::make_shared<LineSet>();
+static std::shared_ptr<open3d::geometry::LineSet>
+CreateGridLineSet(int gridSize = 10, float step = 1.0f) {
+    auto ls = std::make_shared<open3d::geometry::LineSet>();
     std::vector<Eigen::Vector3d> pts;
     std::vector<Eigen::Vector2i> lns;
     int idx = 0;
-    // x축 방향 선 생성
     for (int x = -gridSize; x <= gridSize; x++) {
-        Eigen::Vector3d p1(x * step, 0.0, -gridSize * step);
-        Eigen::Vector3d p2(x * step, 0.0, gridSize * step);
-        pts.push_back(p1);
-        pts.push_back(p2);
-        lns.push_back({ idx * 2, idx * 2 + 1 });
+        pts.push_back({x * step, 0.0, -gridSize * step});
+        pts.push_back({x * step, 0.0, gridSize * step});
+        lns.push_back({idx * 2, idx * 2 + 1});
         idx++;
     }
-    // z축 방향 선 생성
     for (int z = -gridSize; z <= gridSize; z++) {
-        Eigen::Vector3d p1(-gridSize * step, 0.0, z * step);
-        Eigen::Vector3d p2(gridSize * step, 0.0, z * step);
-        pts.push_back(p1);
-        pts.push_back(p2);
-        lns.push_back({ idx * 2, idx * 2 + 1 });
+        pts.push_back({-gridSize * step, 0.0, z * step});
+        pts.push_back({gridSize * step, 0.0, z * step});
+        lns.push_back({idx * 2, idx * 2 + 1});
         idx++;
     }
     ls->points_ = pts;
     ls->lines_ = lns;
-    // 그리드 색상 (회색 계열) 적용
-    ls->PaintUniformColor({ 0.6, 0.6, 0.6 });
+    ls->PaintUniformColor({0.6, 0.6, 0.6});
     return ls;
 }
 
-//---------------------------------------------------------
-// Open3D 시각화 창 재생성 함수
-// FOV 모드에 따라 창 크기 및 내부 Open3D 객체들을 다시 생성
-//---------------------------------------------------------
-static bool RecreateVisualizerWindow(MyVisualizer &vis)
-{
-    using namespace open3d::visualization;
+static bool RecreateVisualizerWindow(MyVisualizer &vis) {
     vis.Close();
     vis.DestroyVisualizerWindow();
     int pcWidth, pcHeight;
     if (g_fovMode == 1) { pcWidth = 640; pcHeight = 576; }
     else if (g_fovMode == 2) { pcWidth = 1024; pcHeight = 1024; }
     else if (g_fovMode == 3) { pcWidth = 512; pcHeight = 512; }
-    else if (g_fovMode == 4) { pcWidth = 320; pcHeight = 288; }
-    if (!vis.CreateVisualizerWindow("3D Point Cloud", pcWidth, pcHeight))
-        return false;
+    else { pcWidth = 320; pcHeight = 288; }
+    if (!vis.CreateVisualizerWindow("3D Point Cloud", pcWidth, pcHeight)) return false;
     vis.RegisterExitKey();
     g_pcPtr = std::make_shared<open3d::geometry::PointCloud>();
     vis.AddGeometry(g_pcPtr);
@@ -257,99 +226,85 @@ static bool RecreateVisualizerWindow(MyVisualizer &vis)
     return true;
 }
 
-//---------------------------------------------------------
-// 불필요한 캡처 프레임 제거 함수
-// (버퍼에 남은 프레임들을 반복적으로 제거)
-//---------------------------------------------------------
-static void DrainExtraFrames()
-{
-    while (true) {
-        k4a_capture_t tmp = nullptr;
-        auto r = k4a_device_get_capture(g_device, &tmp, 0);
-        if (r == K4A_WAIT_RESULT_SUCCEEDED && tmp)
-            k4a_capture_release(tmp);
-        else
-            break;
-    }
-}
-
-//---------------------------------------------------------
-// Orbbec SDK 디바이스 및 관련 객체 초기화 함수
-// 카메라 설정, 캘리브레이션, 트래커 생성 등을 수행
-//---------------------------------------------------------
-bool InitializeAll()
-{
-    // 디바이스 열기
+bool InitializeAll() {
     if (K4A_FAILED(k4a_device_open(K4A_DEVICE_DEFAULT, &g_device))) {
         std::cerr << "device_open fail.\n";
         return false;
     }
-    // 기본 디바이스 설정 (모든 기능 비활성화 후 필요한 항목만 활성화)
+
     k4a_device_configuration_t cfg = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
+    cfg.camera_fps = K4A_FRAMES_PER_SECOND_15;
     if (g_useColor) {
         cfg.color_format = K4A_IMAGE_FORMAT_COLOR_BGRA32;
         cfg.color_resolution = K4A_COLOR_RESOLUTION_720P;
     } else {
         cfg.color_resolution = K4A_COLOR_RESOLUTION_OFF;
     }
+
     if (g_useDepth) {
-        // 선택된 FOV 모드에 따른 Depth 모드 설정
-        if (g_fovMode == 1)
-            cfg.depth_mode = K4A_DEPTH_MODE_NFOV_UNBINNED;         // NFOV Unbinned: 640×576
-        else if (g_fovMode == 2)
-            cfg.depth_mode = K4A_DEPTH_MODE_WFOV_UNBINNED;          // WFOV Unbinned: 1024×1024
-        else if (g_fovMode == 3)
-            cfg.depth_mode = K4A_DEPTH_MODE_WFOV_2X2BINNED;          // WFOV Binned: 512×512
-        else if (g_fovMode == 4)
-            cfg.depth_mode = K4A_DEPTH_MODE_NFOV_2X2BINNED;          // NFOV 2x2 Binned: 320×288
+        if (g_fovMode == 1)      cfg.depth_mode = K4A_DEPTH_MODE_NFOV_UNBINNED;
+        else if (g_fovMode == 2) cfg.depth_mode = K4A_DEPTH_MODE_WFOV_UNBINNED;
+        else if (g_fovMode == 3) cfg.depth_mode = K4A_DEPTH_MODE_WFOV_2X2BINNED;
+        else                     cfg.depth_mode = K4A_DEPTH_MODE_NFOV_2X2BINNED;
     } else {
         cfg.depth_mode = K4A_DEPTH_MODE_OFF;
     }
-    cfg.camera_fps = K4A_FRAMES_PER_SECOND_15;
+
     cfg.synchronized_images_only = true;
-    
-    // 카메라 시작
+
     if (K4A_FAILED(k4a_device_start_cameras(g_device, &cfg))) {
         std::cerr << "start_cameras fail.\n";
         k4a_device_close(g_device);
         g_device = nullptr;
         return false;
     }
-    
-    // 컬러 또는 Depth 사용 시 캘리브레이션 및 트래커 생성
+
     if (g_useColor || g_useDepth) {
         k4a_calibration_t cal;
-        k4a_depth_mode_t selected_mode = (g_fovMode == 1 ? K4A_DEPTH_MODE_NFOV_UNBINNED :
-                                        (g_fovMode == 2 ? K4A_DEPTH_MODE_WFOV_UNBINNED :
-                                        (g_fovMode == 3 ? K4A_DEPTH_MODE_WFOV_2X2BINNED : K4A_DEPTH_MODE_NFOV_2X2BINNED)));
+        k4a_depth_mode_t selected_mode =
+            (g_fovMode == 1
+                 ? K4A_DEPTH_MODE_NFOV_UNBINNED
+                 : g_fovMode == 2
+                       ? K4A_DEPTH_MODE_WFOV_UNBINNED
+                       : g_fovMode == 3 ? K4A_DEPTH_MODE_WFOV_2X2BINNED
+                                        : K4A_DEPTH_MODE_NFOV_2X2BINNED);
+
         if (K4A_FAILED(k4a_device_get_calibration(g_device, selected_mode, K4A_COLOR_RESOLUTION_720P, &cal))) {
             std::cerr << "get_calibration fail.\n";
             return false;
         }
+
         g_transform = k4a_transformation_create(&cal);
         if (!g_transform)
             return false;
+
         k4abt_tracker_configuration_t tcfg = K4ABT_TRACKER_CONFIG_DEFAULT;
+        tcfg.sensor_orientation = g_sensorOrientation;
+        tcfg.processing_mode = K4ABT_TRACKER_PROCESSING_MODE_GPU;
+
         if (K4A_FAILED(k4abt_tracker_create(&cal, tcfg, &g_tracker))) {
             std::cerr << "k4abt_tracker_create fail.\n";
             return false;
         }
+
+        g_rotationMatrix = GetRotationMatrix(g_sensorOrientation);
     }
-    
-    // 단일 "Color&Depth" 창 생성 (좌우 결합)
+
     if (g_useColor && g_useDepth) {
         cv::namedWindow(g_combinedWin, cv::WINDOW_NORMAL);
         cv::resizeWindow(g_combinedWin, g_fovWidth * 2, g_fovHeight);
     }
-    // 포인트 클라우드 시각화 사용 시 Open3D 창 생성
+
     if (g_usePointCloud) {
         int pcWidth, pcHeight;
-        if (g_fovMode == 1) { pcWidth = 640; pcHeight = 576; }
+        if (g_fovMode == 1)      { pcWidth = 640;  pcHeight = 576; }
         else if (g_fovMode == 2) { pcWidth = 1024; pcHeight = 1024; }
-        else if (g_fovMode == 3) { pcWidth = 512; pcHeight = 512; }
-        else if (g_fovMode == 4) { pcWidth = 320; pcHeight = 288; }
+        else if (g_fovMode == 3) { pcWidth = 512;  pcHeight = 512; }
+        else                     { pcWidth = 320;  pcHeight = 288; }
+
         if (!g_vis.CreateVisualizerWindow("3D Point Cloud", pcWidth, pcHeight))
             return false;
+
         g_vis.RegisterExitKey();
         g_pcPtr = std::make_shared<open3d::geometry::PointCloud>();
         g_vis.AddGeometry(g_pcPtr);
@@ -362,16 +317,16 @@ bool InitializeAll()
         g_vis.AddGeometry(g_skelMesh);
         g_vis.GetRenderOption().background_color_ = {0, 0, 0};
     }
+
     g_firstCloud = true;
     g_firstBodyDetected = false;
+    g_skeletonBuffers.clear();
+    g_idToColor.clear();
+    g_showHandInfo = false; // 초기값: 손목 정보 표시 안 함
     return true;
 }
 
-//---------------------------------------------------------
-// 자원 해제 함수: 디바이스, 트래커, 변환 객체, Open3D 창 등 모두 정리
-//---------------------------------------------------------
-void FinalizeAll()
-{
+void FinalizeAll() {
     if (g_usePointCloud) {
         g_vis.Close();
         g_vis.DestroyVisualizerWindow();
@@ -392,18 +347,10 @@ void FinalizeAll()
     cv::destroyWindow(g_combinedWin);
 }
 
-//---------------------------------------------------------
-// 색상과 Depth 영상을 정렬하여 출력 이미지 생성 함수
-//---------------------------------------------------------
-static k4a_image_t CreateAlignedColorImage(
-    k4a_transformation_t transform,
-    k4a_image_t depthImg,
-    k4a_image_t colorImg)
-{
-    if (!transform || !depthImg || !colorImg)
-        return nullptr;
-    int dw = k4a_image_get_width_pixels(depthImg);
-    int dh = k4a_image_get_height_pixels(depthImg);
+static k4a_image_t
+CreateAlignedColorImage(k4a_transformation_t transform, k4a_image_t depthImg, k4a_image_t colorImg) {
+    if (!transform || !depthImg || !colorImg) return nullptr;
+    int dw = k4a_image_get_width_pixels(depthImg), dh = k4a_image_get_height_pixels(depthImg);
     k4a_image_t outImg = nullptr;
     if (K4A_SUCCEEDED(k4a_image_create(K4A_IMAGE_FORMAT_COLOR_BGRA32, dw, dh, dw * 4, &outImg))) {
         if (K4A_FAILED(k4a_transformation_color_image_to_depth_camera(transform, depthImg, colorImg, outImg))) {
@@ -415,47 +362,127 @@ static k4a_image_t CreateAlignedColorImage(
     return nullptr;
 }
 
-//---------------------------------------------------------
-// Depth 영상 위에 2D Body Skeleton을 그리는 함수 (OpenCV 사용)
-//---------------------------------------------------------
-static void DrawBody2DOnDepth(cv::Mat &depthVis,
-    const k4abt_skeleton_t &skeleton,
-    const k4a_calibration_t &cal)
-{
-    // 관절 간 선 그리기
+// RotateText 함수 정의
+static cv::Mat
+RotateText(const std::string &text, double angle, cv::Scalar color, double scale, int thickness) {
+    int baseline = 0;
+    cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, scale, thickness, &baseline);
+    cv::Mat textImg(textSize.height + baseline, textSize.width, CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::putText(textImg, text, cv::Point(0, textSize.height),
+                cv::FONT_HERSHEY_SIMPLEX, scale, color, thickness);
+    cv::Mat rotatedText;
+    cv::Point2f center(textImg.cols / 2.0F, textImg.rows / 2.0F);
+    cv::Mat rotMat = cv::getRotationMatrix2D(center, angle, 1.0);
+    cv::warpAffine(textImg, rotatedText, rotMat, textImg.size(), cv::INTER_LINEAR,
+                   cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+    return rotatedText;
+}
+
+static void
+DrawBody2DOnDepth(cv::Mat &depthVis, const k4abt_skeleton_t &skeleton, const k4a_calibration_t &cal, bool showHandInfo) {
+    // 스켈레톤 그리기
     for (auto &conn : kBodySkeletonConnection) {
-        k4a_float2_t p1, p2; int v1 = 0, v2 = 0;
+        k4a_float2_t p1, p2;
+        int v1 = 0, v2 = 0;
         k4a_calibration_3d_to_2d(&cal, &skeleton.joints[conn.first].position,
-            K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &p1, &v1);
+                                 K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &p1, &v1);
         k4a_calibration_3d_to_2d(&cal, &skeleton.joints[conn.second].position,
-            K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &p2, &v2);
+                                 K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &p2, &v2);
         if (v1 && v2) {
-            cv::line(depthVis, { int(p1.xy.x), int(p1.xy.y) },
-                     { int(p2.xy.x), int(p2.xy.y) }, cv::Scalar(255), 2);
+            cv::line(depthVis,
+                     {int(p1.xy.x), int(p1.xy.y)},
+                     {int(p2.xy.x), int(p2.xy.y)},
+                     cv::Scalar(0, 255, 0), 4);
         }
     }
-    // 각 관절에 원(circle) 그리기
     for (int j = 0; j < kNumBodyJoints; j++) {
-        k4a_float2_t p2d; int valid = 0;
+        k4a_float2_t p2d;
+        int valid = 0;
         k4a_calibration_3d_to_2d(&cal, &skeleton.joints[j].position,
-            K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &p2d, &valid);
+                                 K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &p2d, &valid);
         if (valid) {
-            cv::circle(depthVis, { int(p2d.xy.x), int(p2d.xy.y) },
-                       3, cv::Scalar(255), -1);
+            cv::circle(depthVis, {int(p2d.xy.x), int(p2d.xy.y)}, 5, cv::Scalar(0, 0, 255), -1);
+        }
+    }
+
+    // 손목 정보 표시 (g_showHandInfo가 true일 때만)
+    if (showHandInfo) {
+        // 왼손 손목 정보
+        int leftWristIndex = K4ABT_JOINT_WRIST_LEFT;
+        k4a_float2_t leftWrist2d;
+        int validLeft = 0;
+        k4a_calibration_3d_to_2d(&cal, &skeleton.joints[leftWristIndex].position,
+                                 K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &leftWrist2d, &validLeft);
+        if (validLeft) {
+            k4a_float3_t leftPos = skeleton.joints[leftWristIndex].position;
+            Eigen::Vector3d p(leftPos.v[0] / 1000.0, -leftPos.v[1] / 1000.0, -leftPos.v[2] / 1000.0);
+            Eigen::Vector3d p_default = g_rotationMatrix.transpose() * p;
+            double leftDistance = p_default.norm();
+            std::string leftText = "L: " + std::to_string(leftDistance).substr(0, 4) + " m";
+            std::string leftCoord = "(" + std::to_string(p_default[0]).substr(0, 4) + ", " +
+                                    std::to_string(p_default[1]).substr(0, 4) + ", " +
+                                    std::to_string(p_default[2]).substr(0, 4) + ")";
+            double angle = (g_sensorOrientation == K4ABT_SENSOR_ORIENTATION_FLIP180) ? 180.0 : 0.0;
+            cv::Mat textImg1 = RotateText(leftText, angle, cv::Scalar(0, 0, 255), 0.8, 2);
+            cv::Mat textImg2 = RotateText(leftCoord, angle, cv::Scalar(0, 0, 255), 0.8, 2);
+            cv::Rect roi1((int)leftWrist2d.xy.x + 5, (int)leftWrist2d.xy.y - 5 - textImg1.rows, textImg1.cols, textImg1.rows);
+            cv::Rect roi2((int)leftWrist2d.xy.x + 5, (int)leftWrist2d.xy.y + 20 - textImg2.rows, textImg2.cols, textImg2.rows);
+            if (roi1.x >= 0 && roi1.y >= 0 && roi1.x + roi1.width <= depthVis.cols && roi1.y + roi1.height <= depthVis.rows)
+                textImg1.copyTo(depthVis(roi1));
+            if (roi2.x >= 0 && roi2.y >= 0 && roi2.x + roi2.width <= depthVis.cols && roi2.y + roi2.height <= depthVis.rows)
+                textImg2.copyTo(depthVis(roi2));
+        }
+
+        // 오른손 손목 정보
+        int rightWristIndex = K4ABT_JOINT_WRIST_RIGHT;
+        k4a_float2_t rightWrist2d;
+        int validRight = 0;
+        k4a_calibration_3d_to_2d(&cal, &skeleton.joints[rightWristIndex].position,
+                                 K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &rightWrist2d, &validRight);
+        if (validRight) {
+            k4a_float3_t rightPos = skeleton.joints[rightWristIndex].position;
+            Eigen::Vector3d p(rightPos.v[0] / 1000.0, -rightPos.v[1] / 1000.0, -rightPos.v[2] / 1000.0);
+            Eigen::Vector3d p_default = g_rotationMatrix.transpose() * p;
+            double rightDistance = p_default.norm();
+            std::string rightText = "R: " + std::to_string(rightDistance).substr(0, 4) + " m";
+            std::string rightCoord = "(" + std::to_string(p_default[0]).substr(0, 4) + ", " +
+                                     std::to_string(p_default[1]).substr(0, 4) + ", " +
+                                     std::to_string(p_default[2]).substr(0, 4) + ")";
+            double angle = (g_sensorOrientation == K4ABT_SENSOR_ORIENTATION_FLIP180) ? 180.0 : 0.0;
+            cv::Mat textImg1 = RotateText(rightText, angle, cv::Scalar(0, 0, 255), 0.8, 2);
+            cv::Mat textImg2 = RotateText(rightCoord, angle, cv::Scalar(0, 0, 255), 0.8, 2);
+            cv::Rect roi1((int)rightWrist2d.xy.x + 5, (int)rightWrist2d.xy.y - 5 - textImg1.rows, textImg1.cols, textImg1.rows);
+            cv::Rect roi2((int)rightWrist2d.xy.x + 5, (int)rightWrist2d.xy.y + 20 - textImg2.rows, textImg2.cols, textImg2.rows);
+            if (roi1.x >= 0 && roi1.y >= 0 && roi1.x + roi1.width <= depthVis.cols && roi1.y + roi1.height <= depthVis.rows)
+                textImg1.copyTo(depthVis(roi1));
+            if (roi2.x >= 0 && roi2.y >= 0 && roi2.x + roi2.width <= depthVis.cols && roi2.y + roi2.height <= depthVis.rows)
+                textImg2.copyTo(depthVis(roi2));
         }
     }
 }
 
-//---------------------------------------------------------
-// main 함수: 프로그램의 진입점
-// 사용자로부터 FOV 모드 및 포인트 클라우드 사용 여부를 입력받아
-// Orbbec SDK를 초기화하고, 영상 처리 및 Azure Kinect Body Tracking, 시각화 작업을 수행함
-//---------------------------------------------------------
-int main()
-{
-    // FOV 모드 선택 메뉴 출력
-    // 1: NFOV Unbinned (640x576), 2: WFOV Unbinned (1024x1024),
-    // 3: WFOV Binned (512x512), 4: NFOV 2x2 Binned (320x288)
+static k4abt_skeleton_t
+ComputeAverageSkeleton(const std::deque<k4abt_skeleton_t> &buffer) {
+    k4abt_skeleton_t avgSkeleton;
+    if (buffer.empty()) return avgSkeleton;
+
+    size_t bufferSize = buffer.size();
+    for (int j = 0; j < kNumBodyJoints; j++) {
+        float sumX = 0.0f, sumY = 0.0f, sumZ = 0.0f;
+        for (const auto &skel : buffer) {
+            sumX += skel.joints[j].position.xyz.x;
+            sumY += skel.joints[j].position.xyz.y;
+            sumZ += skel.joints[j].position.xyz.z;
+        }
+        avgSkeleton.joints[j].position.xyz.x = sumX / bufferSize;
+        avgSkeleton.joints[j].position.xyz.y = sumY / bufferSize;
+        avgSkeleton.joints[j].position.xyz.z = sumZ / bufferSize;
+        avgSkeleton.joints[j].confidence_level = buffer.back().joints[j].confidence_level;
+    }
+    return avgSkeleton;
+}
+
+int main() {
     std::cout << "Select FOV mode:\n"
               << " 1: NFOV Unbinned (640x576)\n"
               << " 2: WFOV Unbinned (1024x1024)\n"
@@ -463,67 +490,50 @@ int main()
               << " 4: NFOV 2x2 Binned (320x288)\n"
               << "Enter number: ";
     std::cin >> g_fovMode;
-    if (g_fovMode == 1) {
-        g_fovWidth = 640;
-        g_fovHeight = 576;
-    } else if (g_fovMode == 2) {
-        g_fovWidth = 1024;
-        g_fovHeight = 1024;
-    } else if (g_fovMode == 3) {
-        g_fovWidth = 512;
-        g_fovHeight = 512;
-    } else if (g_fovMode == 4) {
-        g_fovWidth = 320;
-        g_fovHeight = 288;
-    } else {
+    if (g_fovMode == 1)      { g_fovWidth = 640;  g_fovHeight = 576; }
+    else if (g_fovMode == 2) { g_fovWidth = 1024; g_fovHeight = 1024; }
+    else if (g_fovMode == 3) { g_fovWidth = 512;  g_fovHeight = 512; }
+    else if (g_fovMode == 4) { g_fovWidth = 320;  g_fovHeight = 288; }
+    else {
         g_fovMode = 1;
         g_fovWidth = 640;
         g_fovHeight = 576;
     }
-    // 컬러와 Depth 영상은 항상 사용
+
     g_useColor = true;
     g_useDepth = true;
-    
-    // 포인트 클라우드 사용 여부 입력 받음
+
     std::cout << "Use PointCloud? (y/n): ";
-    {
-        std::string s;
-        std::cin >> s;
-        if (!s.empty() && (s[0] == 'y' || s[0] == 'Y'))
-            g_usePointCloud = true;
-    }
-    
-    // 포인트 클라우드 창이 사용되지 않는 경우 관련 함수 호출하지 않도록 처리
+    std::string s;
+    std::cin >> s;
+    if (!s.empty() && (s[0] == 'y' || s[0] == 'Y'))
+        g_usePointCloud = true;
+
 RESTART_ALL:
     if (!InitializeAll()) {
         std::cerr << "init fail.\n";
         return -1;
     }
-    
+
     bool quit = false;
+    static std::chrono::steady_clock::time_point prevTime = std::chrono::steady_clock::now();
+
     while (!quit) {
-        // 포인트 클라우드 창 업데이트 (사용 중이면 이벤트 처리)
         if (g_usePointCloud) {
             g_vis.PollEvents();
             if (g_vis.ShouldExit())
                 break;
         }
+
         k4a_capture_t cap = nullptr;
-        auto r = k4a_device_get_capture(g_device, &cap, 15);
-        if (r == K4A_WAIT_RESULT_TIMEOUT)
+        auto r = k4a_device_get_capture(g_device, &cap, 0); // 타임아웃 0으로 즉시 반환
+        if (r == K4A_WAIT_RESULT_TIMEOUT || r == K4A_WAIT_RESULT_FAILED || !cap) {
             continue;
-        else if (r == K4A_WAIT_RESULT_FAILED) {
-            std::cerr << "get_capture fail.\n";
-            FinalizeAll();
-            goto RESTART_ALL;
         }
-        if (!cap)
-            continue;
-        // Depth와 Color 이미지 가져오기
-        k4a_image_t depthImg = (g_useDepth) ? k4a_capture_get_depth_image(cap) : nullptr;
-        k4a_image_t colorImg = (g_useColor) ? k4a_capture_get_color_image(cap) : nullptr;
-        
-        //--------------- Depth 이미지 처리 ---------------
+
+        k4a_image_t depthImg = g_useDepth ? k4a_capture_get_depth_image(cap) : nullptr;
+        k4a_image_t colorImg = g_useColor ? k4a_capture_get_color_image(cap) : nullptr;
+
         cv::Mat dv;
         if (depthImg) {
             int dw = k4a_image_get_width_pixels(depthImg);
@@ -531,7 +541,6 @@ RESTART_ALL:
             uint16_t* dptr = (uint16_t*)k4a_image_get_buffer(depthImg);
             cv::Mat dmat(dh, dw, CV_16UC1, dptr);
             dv = cv::Mat(dh, dw, CV_8UC1);
-            // 각 픽셀 값에 대해 범위 조정 (4000 초과 시 255, 그 외는 16으로 나눔)
             for (int rr = 0; rr < dh; rr++) {
                 for (int cc = 0; cc < dw; cc++) {
                     uint16_t v = dmat.at<uint16_t>(rr, cc);
@@ -539,8 +548,7 @@ RESTART_ALL:
                 }
             }
         }
-        
-        //--------------- Color 이미지 처리 ---------------
+
         cv::Mat showColor;
         if (g_useColor && colorImg) {
             int cw = k4a_image_get_width_pixels(colorImg);
@@ -549,155 +557,152 @@ RESTART_ALL:
             uint8_t* cbuf = (uint8_t*)k4a_image_get_buffer(colorImg);
             cv::Mat colorBGRA(ch, cw, CV_8UC4, (void*)cbuf, cstride);
             cv::Mat colorBGR;
-            // BGRA -> BGR로 색상 변환
             cv::cvtColor(colorBGRA, colorBGR, cv::COLOR_BGRA2BGR);
-            // 선택된 FOV 모드 해상도에 맞게 리사이즈
-            cv::resize(colorBGR, showColor, { g_fovWidth, g_fovHeight });
+            cv::resize(colorBGR, showColor, {g_fovWidth, g_fovHeight});
         }
-        
-        //--------------- Body Tracking 및 Skeleton 생성 ---------------
+
+        // Body Tracking
         if (g_tracker && cap) {
             if (K4A_FAILED(k4abt_tracker_enqueue_capture(g_tracker, cap, 0)))
                 std::cerr << "tracker_enqueue fail.\n";
             else {
                 k4abt_frame_t bodyFrame = nullptr;
-                auto popRes = k4abt_tracker_pop_result(g_tracker, &bodyFrame, 100);
+                auto popRes = k4abt_tracker_pop_result(g_tracker, &bodyFrame, 10);
                 if (popRes == K4A_WAIT_RESULT_SUCCEEDED && bodyFrame) {
                     size_t numBodies = k4abt_frame_get_num_bodies(bodyFrame);
-                    cv::Mat dvCopy = dv.clone();
-                    if (g_usePointCloud) {
-                        if (g_skelMesh)
-                            g_skelMesh->Clear();
-                    }
-                    // 각 인식된 Body에 대해 Skeleton 처리
+                    cv::Mat dvCopy;
+                    cv::cvtColor(dv, dvCopy, cv::COLOR_GRAY2BGR);
+
+                    if (g_usePointCloud && g_skelMesh)
+                        g_skelMesh->Clear();
+
                     for (size_t i = 0; i < numBodies; i++) {
+                        uint32_t id = k4abt_frame_get_body_id(bodyFrame, i);
                         k4abt_skeleton_t skeleton;
                         k4abt_frame_get_body_skeleton(bodyFrame, i, &skeleton);
-                        k4a_depth_mode_t selected_mode = (g_fovMode == 1 ? K4A_DEPTH_MODE_NFOV_UNBINNED :
-                                                        (g_fovMode == 2 ? K4A_DEPTH_MODE_WFOV_UNBINNED :
-                                                        (g_fovMode == 3 ? K4A_DEPTH_MODE_WFOV_2X2BINNED : K4A_DEPTH_MODE_NFOV_2X2BINNED)));
+
+                        // ID -> Skeleton Buffer
+                        if (g_skeletonBuffers.find(id) == g_skeletonBuffers.end()) {
+                            g_skeletonBuffers[id] = std::deque<k4abt_skeleton_t>();
+                            g_idToColor[id] = g_skelColorPresets[g_idToColor.size() % g_skelColorPresets.size()];
+                        }
+                        if (g_skeletonBuffers[id].size() >= kFrameBufferSize) {
+                            g_skeletonBuffers[id].pop_front();
+                        }
+                        g_skeletonBuffers[id].push_back(skeleton);
+
+                        k4abt_skeleton_t avgSkeleton = ComputeAverageSkeleton(g_skeletonBuffers[id]);
+
+                        // 2D 그리기
+                        k4a_depth_mode_t selected_mode =
+                            (g_fovMode == 1
+                                 ? K4A_DEPTH_MODE_NFOV_UNBINNED
+                                 : g_fovMode == 2
+                                       ? K4A_DEPTH_MODE_WFOV_UNBINNED
+                                       : g_fovMode == 3 ? K4A_DEPTH_MODE_WFOV_2X2BINNED
+                                                        : K4A_DEPTH_MODE_NFOV_2X2BINNED);
+
                         k4a_calibration_t calibration;
-                        if (K4A_RESULT_SUCCEEDED == k4a_device_get_calibration(g_device,
-                                selected_mode,
-                                K4A_COLOR_RESOLUTION_720P, &calibration))
-                        {
-                            // 2D로 Body Skeleton 그리기
-                            DrawBody2DOnDepth(dvCopy, skeleton, calibration);
+                        if (K4A_RESULT_SUCCEEDED ==
+                            k4a_device_get_calibration(g_device, selected_mode, K4A_COLOR_RESOLUTION_720P, &calibration)) {
+                            DrawBody2DOnDepth(dvCopy, avgSkeleton, calibration, g_showHandInfo);
                         }
-                        
-                        // 왼손, 오른손의 거리 및 좌표 정보 표시
-                        {
-                            int leftHandIndex = 8;
-                            k4a_float2_t leftHand2d;
-                            int validLeft = 0;
-                            k4a_calibration_3d_to_2d(&calibration, &skeleton.joints[leftHandIndex].position,
-                                K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &leftHand2d, &validLeft);
-                            if (validLeft) {
-                                k4a_float3_t leftPos = skeleton.joints[leftHandIndex].position;
-                                double leftX = leftPos.v[0] / 1000.0;
-                                double leftY = -leftPos.v[1] / 1000.0;
-                                double leftZ = -leftPos.v[2] / 1000.0;
-                                double leftDistance = std::sqrt(leftX * leftX + leftY * leftY + leftZ * leftZ);
-                                std::string leftText = "L: " + std::to_string(leftDistance).substr(0, 4) + " m";
-                                cv::putText(dvCopy, leftText, cv::Point((int)leftHand2d.xy.x + 5, (int)leftHand2d.xy.y - 5),
-                                            cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255), 2);
-                                std::string leftCoord = "(" + std::to_string(leftX).substr(0, 4) + ", " +
-                                                        std::to_string(leftY).substr(0, 4) + ", " +
-                                                        std::to_string(leftZ).substr(0, 4) + ")";
-                                cv::putText(dvCopy, leftCoord, cv::Point((int)leftHand2d.xy.x + 5, (int)leftHand2d.xy.y + 15),
-                                            cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255), 2);
-                            }
-                        }
-                        {
-                            int rightHandIndex = 15;
-                            k4a_float2_t rightHand2d;
-                            int validRight = 0;
-                            k4a_calibration_3d_to_2d(&calibration, &skeleton.joints[rightHandIndex].position,
-                                K4A_CALIBRATION_TYPE_DEPTH, K4A_CALIBRATION_TYPE_DEPTH, &rightHand2d, &validRight);
-                            if (validRight) {
-                                k4a_float3_t rightPos = skeleton.joints[rightHandIndex].position;
-                                double rightX = rightPos.v[0] / 1000.0;
-                                double rightY = -rightPos.v[1] / 1000.0;
-                                double rightZ = -rightPos.v[2] / 1000.0;
-                                double rightDistance = std::sqrt(rightX * rightX + rightY * rightY + rightZ * rightZ);
-                                std::string rightText = "R: " + std::to_string(rightDistance).substr(0, 4) + " m";
-                                cv::putText(dvCopy, rightText, cv::Point((int)rightHand2d.xy.x + 5, (int)rightHand2d.xy.y - 5),
-                                            cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255), 2);
-                                std::string rightCoord = "(" + std::to_string(rightX).substr(0, 4) + ", " +
-                                                         std::to_string(rightY).substr(0, 4) + ", " +
-                                                         std::to_string(rightZ).substr(0, 4) + ")";
-                                cv::putText(dvCopy, rightCoord, cv::Point((int)rightHand2d.xy.x + 5, (int)rightHand2d.xy.y + 15),
-                                            cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255), 2);
-                            }
-                        }
-                        // 3D 좌표로 스켈레톤 메쉬 생성
-                        std::vector<Eigen::Vector3d> j3d(kNumBodyJoints, { 0, 0, 0 });
+
+                        // 3D 스켈레톤 메쉬
+                        std::vector<Eigen::Vector3d> j3d(kNumBodyJoints, {0, 0, 0});
                         for (int j = 0; j < kNumBodyJoints; j++) {
-                            k4a_float3_t pos = skeleton.joints[j].position;
+                            k4a_float3_t pos = avgSkeleton.joints[j].position;
                             double X = pos.v[0] / 1000.0;
                             double Y = -pos.v[1] / 1000.0;
                             double Z = -pos.v[2] / 1000.0;
-                            j3d[j] = { X, Y, Z };
+                            j3d[j] = {X, Y, Z};
                         }
-                        auto newMesh = CreateSkeletonMesh(j3d);
-                        if (g_usePointCloud)  // 포인트 클라우드 관련 메쉬 업데이트
-                            *g_skelMesh += *newMesh;
+                        auto skeletonMesh = CreateSkeletonMesh(j3d, g_idToColor[id]);
+                        if (g_usePointCloud && g_skelMesh) {
+                            *g_skelMesh += *skeletonMesh;
+                        }
                     }
-                    // Depth 영상 및 Color 영상을 결합하여 출력
+
                     cv::Mat showDepth;
-                    cv::resize(dvCopy, showDepth, { g_fovWidth, g_fovHeight });
-                    cv::Mat showDepthColor;
-                    cv::cvtColor(showDepth, showDepthColor, cv::COLOR_GRAY2BGR);
+                    cv::resize(dvCopy, showDepth, {g_fovWidth, g_fovHeight});
+                    int rotationCode = GetRotationCode(g_sensorOrientation);
+                    if (rotationCode != -1) {
+                        cv::Mat rotatedColor, rotatedDepth;
+                        cv::rotate(showColor, rotatedColor, rotationCode);
+                        cv::rotate(showDepth, rotatedDepth, rotationCode);
+                        showColor = rotatedColor;
+                        showDepth = rotatedDepth;
+                    }
                     cv::Mat combined;
-                    if (!showColor.empty() && !showDepthColor.empty())
-                        cv::hconcat(showColor, showDepthColor, combined);
-                    cv::imshow(g_combinedWin, combined);
-                    
-                    if (g_usePointCloud) {
+                    if (!showColor.empty() && !showDepth.empty())
+                        cv::hconcat(showColor, showDepth, combined);
+
+                    if (!combined.empty()) {
+                        cv::resizeWindow(g_combinedWin, combined.cols, combined.rows);
+                        cv::imshow(g_combinedWin, combined);
+                    }
+
+                    // Open3D 상에 스켈레톤 메쉬 갱신
+                    if (g_usePointCloud && g_skelMesh) {
                         g_vis.UpdateGeometry(g_skelMesh);
                         g_vis.UpdateRender();
-                        if (!g_firstBodyDetected) {
+                        if (!g_firstBodyDetected && !g_skelMesh->vertices_.empty()) {
                             g_firstBodyDetected = true;
                             g_vis.ResetViewPoint(true);
                         }
-                        g_vis.PollEvents();
                     }
+
                     k4abt_frame_release(bodyFrame);
                 }
             }
         }
-        
-        //--------------- 포인트 클라우드 생성 (Depth 이미지 기반) ---------------
+
+        // 여기서부터 추가: depthImg를 이용해 point cloud 생성
         if (depthImg && g_usePointCloud && g_transform) {
             int dw = k4a_image_get_width_pixels(depthImg);
             int dh = k4a_image_get_height_pixels(depthImg);
+
+            // Point Cloud용 이미지(pcImg) 생성
             k4a_image_t pcImg = nullptr;
-            if (K4A_SUCCEEDED(k4a_image_create(K4A_IMAGE_FORMAT_CUSTOM, dw, dh, dw * 3 * sizeof(int16_t), &pcImg))) {
-                if (K4A_SUCCEEDED(k4a_transformation_depth_image_to_point_cloud(g_transform, depthImg, K4A_CALIBRATION_TYPE_DEPTH, pcImg))) {
+            if (K4A_SUCCEEDED(k4a_image_create(K4A_IMAGE_FORMAT_CUSTOM,
+                                               dw, dh, dw * 3 * (int)sizeof(int16_t),
+                                               &pcImg))) {
+                // depth -> point cloud 변환
+                if (K4A_SUCCEEDED(k4a_transformation_depth_image_to_point_cloud(
+                                      g_transform, depthImg,
+                                      K4A_CALIBRATION_TYPE_DEPTH, pcImg))) {
+                    // 생성된 포인트 클라우드 업데이트
                     g_pcPtr->Clear();
                     g_pcPtr->points_.reserve(dw * dh);
                     g_pcPtr->colors_.reserve(dw * dh);
-                    int16_t* b = (int16_t*)k4a_image_get_buffer(pcImg);
+
+                    int16_t* buffer = (int16_t*)k4a_image_get_buffer(pcImg);
                     for (int i = 0; i < dw * dh; i++) {
-                        int16_t xm = b[3 * i + 0];
-                        int16_t ym = b[3 * i + 1];
-                        int16_t zm = b[3 * i + 2];
-                        if (zm == 0)
+                        int16_t xVal = buffer[3 * i + 0];
+                        int16_t yVal = buffer[3 * i + 1];
+                        int16_t zVal = buffer[3 * i + 2];
+                        if (zVal == 0) // 유효 깊이 데이터가 없는 경우 무시
                             continue;
-                        double X = (double)xm / 1000.0;
-                        double Y = (double)(-ym) / 1000.0;
-                        double Z = (double)(-zm) / 1000.0;
-                        g_pcPtr->points_.push_back({ X, Y, Z });
-                        double dist = sqrt(X * X + Y * Y + Z * Z);
-                        double maxD = 4.0;
-                        if (dist > maxD)
-                            dist = maxD;
-                        double t = dist / maxD;
-                        g_pcPtr->colors_.push_back({ t, 0.0, 1.0 - t });
+
+                        // Azure Kinect 기준 좌표계 -> 우리가 쓰는 변환
+                        double X = (double)xVal / 1000.0;
+                        double Y = -(double)yVal / 1000.0;
+                        double Z = -(double)zVal / 1000.0;
+
+                        g_pcPtr->points_.push_back({X, Y, Z});
+
+                        // 예시: 거리 기반으로 간단하게 색상 매핑
+                        double dist = std::sqrt(X * X + Y * Y + Z * Z);
+                        double maxDist = 4.0; // 4m를 최대 표시 범위로 가정
+                        if (dist > maxDist) dist = maxDist;
+                        double t = dist / maxDist;
+                        // 파랑(가까움) -> 빨강(멀리)
+                        g_pcPtr->colors_.push_back({t, 0.0, 1.0 - t});
                     }
+
                     if (!g_pcPtr->points_.empty() && g_firstCloud) {
-                        g_vis.ResetViewPoint(true);
                         g_firstCloud = false;
+                        g_vis.ResetViewPoint(true);
                     }
                     g_vis.UpdateGeometry(g_pcPtr);
                     g_vis.UpdateRender();
@@ -705,51 +710,34 @@ RESTART_ALL:
                 k4a_image_release(pcImg);
             }
         }
-        
-        // 이미지 및 캡처 객체 해제
-        if (colorImg)
-            k4a_image_release(colorImg);
-        if (depthImg)
-            k4a_image_release(depthImg);
+
+        if (depthImg)  k4a_image_release(depthImg);
+        if (colorImg)  k4a_image_release(colorImg);
         k4a_capture_release(cap);
-        DrainExtraFrames();
-        
-        // 키 입력 처리: 'q' 또는 ESC면 종료, 'r'면 포인트 클라우드 창 리셋, 'd'면 재초기화
+
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - prevTime).count();
+        int targetInterval = 1000 / 30;
+        if (elapsed < targetInterval) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(targetInterval - elapsed));
+        }
+        prevTime = std::chrono::steady_clock::now();
+
         int key = cv::waitKey(1);
         if (key == 27 || key == 'q' || key == 'Q') {
             quit = true;
             break;
         } else if (key == 'r' || key == 'R') {
-            if (g_usePointCloud) {
-                g_vis.Close();
-                g_vis.DestroyVisualizerWindow();
-                int pcWidth, pcHeight;
-                if (g_fovMode == 1) { pcWidth = 640; pcHeight = 576; }
-                else if (g_fovMode == 2) { pcWidth = 1024; pcHeight = 1024; }
-                else if (g_fovMode == 3) { pcWidth = 512; pcHeight = 512; }
-                else if (g_fovMode == 4) { pcWidth = 320; pcHeight = 288; }
-                if (!g_vis.CreateVisualizerWindow("3D Point Cloud", pcWidth, pcHeight))
-                    break;
-                g_vis.RegisterExitKey();
-                g_pcPtr = std::make_shared<open3d::geometry::PointCloud>();
-                g_vis.AddGeometry(g_pcPtr);
-                auto axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0, { 0, 0, 0 });
-                g_vis.AddGeometry(axes);
-                auto grid = CreateGridLineSet(10, 0.2f);
-                g_vis.AddGeometry(grid);
-                g_skelMesh = std::make_shared<open3d::geometry::TriangleMesh>();
-                g_skelMesh->Clear();
-                g_vis.AddGeometry(g_skelMesh);
-                g_vis.GetRenderOption().background_color_ = { 0, 0, 0 };
-                g_firstCloud = true;
-                g_firstBodyDetected = false;
-            }
+            if (g_usePointCloud)
+                RecreateVisualizerWindow(g_vis);
         } else if (key == 'd' || key == 'D') {
             FinalizeAll();
             goto RESTART_ALL;
+        } else if (key == 'h' || key == 'H') {
+            g_showHandInfo = !g_showHandInfo; // 손목 정보 표시 토글
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+
     FinalizeAll();
     return 0;
 }

@@ -830,11 +830,15 @@ Orbbec Femto Mega 카메라와 Orbbec SDK, Azure Kinect Body Tracking SDK를 활
 
 ### 주요 기능
 - 실시간 3D 인체 스켈레톤 추적 및 시각화
+- ID 기반 다중 사용자 스켈레톤 추적 (각 사용자별 색상 구분)
+- 스켈레톤 움직임 안정화를 위한 프레임 평균화 기능
 - Open3D를 사용한 포인트 클라우드 렌더링
-- 스켈레톤 색상 및 크기 조절 기능
+- 스켈레톤 크기 조절 기능
 - 다양한 FOV(Field of View) 모드 지원
 - 배경 그리드 표시 기능
 - OpenCV를 이용한 2D 이미지 처리 및 표시
+- 손목 위치 좌표 및 거리 정보 표시 기능
+- 센서 방향 처리 (180도 회전 등)
 
 </details>
 
@@ -850,12 +854,16 @@ Orbbec Femto Mega 카메라와 Orbbec SDK, Azure Kinect Body Tracking SDK를 활
 - 64비트 Windows 운영체제를 갖춘 컴퓨터
 - 8GB 이상 RAM (16GB 권장)
 - DX11 지원 그래픽 카드
+- CUDA 지원 GPU (Azure Kinect Body Tracking SDK 사용 시 권장)
 
 ### 소프트웨어
 - Windows 10 이상
 - Visual Studio 2019 이상
 - CMake 3.31.6 이상
-- vcpkg 패키지 관리자
+- OpenCV 4.5.0 이상
+- Open3D 0.13.0 이상
+- Orbbec SDK K4A Wrapper v1.10.3 이상
+- Azure Kinect Body Tracking SDK
 
 </details>
 
@@ -866,27 +874,30 @@ Orbbec Femto Mega 카메라와 Orbbec SDK, Azure Kinect Body Tracking SDK를 활
 <details>
 <summary>종속성 설치 방법</summary>
 
-### 1. vcpkg 설치
+### 1. vcpkg 설치 (선택적)
 ```bash
 # vcpkg 클론 및 설치
-git clone https://github.com/microsoft/vcpkg.git C:/clone/vcpkg-master
-cd C:/clone/vcpkg-master
+git clone https://github.com/microsoft/vcpkg.git C:/project/vcpkg
+cd C:/project/vcpkg
 bootstrap-vcpkg.bat
 ```
 
 ### 2. OpenCV 설치
 ```bash
-# vcpkg를 통한 OpenCV 설치
-C:/clone/vcpkg-master/vcpkg install opencv4:x64-windows
+# 직접 다운로드 및 빌드
+https://opencv.org/releases/ 에서 최신 버전 다운로드 및 빌드
+# 또는 vcpkg를 통한 설치
+C:/project/vcpkg/vcpkg install opencv4:x64-windows
 ```
 
 ### 3. Open3D 설치
 Open3D는 공식 웹사이트에서 다운로드하거나 소스에서 빌드할 수 있습니다.
 - [Open3D 공식 사이트](https://www.open3d.org/docs/release/compilation.html)
-- 빌드된 바이너리를 `C:/clone/open3d`에 위치시키세요.
+- 빌드된 바이너리를 `C:/project/open3d`에 위치시키세요.
 
 ### 4. Orbbec SDK (Azure Kinect SDK Wrapper) 설치
-Orbbec SDK K4A Wrapper를 다운로드하여 `C:/clone/OrbbecSDK_K4A_Wrapper_v1.10.3_windows_202408091749`에 설치하세요.
+- [Orbbec SDK K4A Wrapper](https://github.com/orbbec/OrbbecSDK-K4A-Wrapper) 저장소 클론 또는 릴리즈 파일 다운로드
+- 다운로드한 SDK를 `C:/project/OrbbecSDK_K4A_Wrapper_v1.10.3_windows_202408091749`에 설치하세요.
 
 ### 5. Azure Kinect Body Tracking SDK 설치
 Microsoft 공식 웹사이트에서 SDK를 다운로드하여 기본 경로에 설치하세요.
@@ -912,16 +923,16 @@ cmake --build . --config Release
 
 ### Visual Studio에서 빌드
 1. Visual Studio에서 프로젝트 열기
-2. CMakeLists.txt 설정에서 툴체인 파일 지정: `-DCMAKE_TOOLCHAIN_FILE=C:/clone/vcpkg-master/scripts/buildsystems/vcpkg.cmake` (경로는 개인 설정에 따라 다를 수 있음음)
+2. CMake 설정에서 종속성 경로 확인 (필요 시 CMakeLists.txt 경로 수정)
 3. 빌드 구성을 'Release'로 설정
 4. 프로젝트 빌드
 
-### 필요한 DLL 파일 (환경에 따라 필요한 파일이 다르거나 추가될 수 있음)
-빌드 과정에서 다음 DLL 파일들이 자동으로 복사됩니다:
+### 필요한 DLL 파일 (환경에 따라 필요한 파일이 다를 수 있음)
 - OrbbecSDK DLL 파일들
+- k4a.dll
 - Open3D.dll
-- k4abt.dll
-- dnn_model_2_0_op11.onnx, dnn_model_2_0_lite_op11.onnx (신경망 모델 파일)
+- opencv_world4110.dll (또는 해당 버전)
+- dnn_model_2_0_op11.onnx (신경망 모델 파일)
 - onnxruntime.dll
 
 </details>
@@ -934,19 +945,32 @@ cmake --build . --config Release
 <summary>프로그램 사용 방법</summary>
 
 ### 기본 조작법
-- ESC: 프로그램 종료
-- 1-4: FOV 모드 변경
+- **ESC** / **Q**: 프로그램 종료
+- **R**: 3D 뷰 리셋
+- **D**: 카메라 재연결 (디바이스 재시작)
+- **H**: 손목 정보 표시 토글 (손목 좌표 및 거리 정보)
+- **1-4**: FOV 모드 변경
   - 1: NFOV Unbinned (640×576)
   - 2: WFOV Unbinned (1024×1024)
   - 3: WFOV Binned (512×512)
   - 4: NFOV 2x2 Binned (320×288)
-- C: 스켈레톤 색상 변경 (노란색, 빨간색, 초록색, 파란색)
-- +/-: 스켈레톤 크기 조절
-- P: 포인트 클라우드 표시/숨김
+- **+/-**: 스켈레톤 크기 조절
+- **P**: 포인트 클라우드 표시/숨김 토글
 
 ### 시각화 창
-- 3D 뷰어: 스켈레톤과 포인트 클라우드를 3D로 표시
-- Color&Depth: 컬러 이미지와 깊이 이미지를 함께 표시
+- **3D Point Cloud**: 스켈레톤과 포인트 클라우드를 3D로 표시
+  - 마우스 좌클릭 드래그: 회전
+  - 마우스 우클릭 드래그: 이동
+  - 마우스 휠: 확대/축소
+- **Color&Depth**: 컬러 이미지와 깊이 이미지를 함께 표시
+  - 색상별 스켈레톤 및 손목 위치 정보 표시
+
+### 주요 기능
+- **ID 기반 다중 사용자 추적**: 사용자마다 ID를 할당해 서로 다른 색상으로 표시
+- **스켈레톤 평균화**: 프레임 간 스켈레톤 위치를 평균화하여 움직임 안정화
+- **손목 정보 표시**: 손목 위치의 3D 좌표 및 카메라로부터의 거리 표시 (H 키로 토글)
+- **카메라 방향 처리**: 180도 회전된 카메라 설정 지원 (깊이 이미지 및 스켈레톤 좌표 자동 조정)
+- **FPS 제한**: 초당 30 프레임으로 제한하여 CPU 사용량 최적화
 
 </details>
 
@@ -963,5 +987,22 @@ cpp_orbbec/
 └── src/
     └── main.cpp            # 메인 소스 코드
 ```
+
+### 소스 코드 구조 (main.cpp)
+- **초기 설정 및 전역 변수**: 스켈레톤 추적, 시각화 관련 설정
+- **유틸리티 함수**: 
+  - 스켈레톤 메쉬 생성 (CreateSphereMesh, CreateCylinderMesh, CreateSkeletonMesh)
+  - 그리드 생성 (CreateGridLineSet)
+  - 회전 행렬 및 회전 코드 처리 (GetRotationMatrix, GetRotationCode)
+  - 텍스트 회전 및 출력 (RotateText)
+  - 스켈레톤 평균화 (ComputeAverageSkeleton)
+- **초기화 함수**: 카메라, 트래커, 시각화 구성요소 초기화 (InitializeAll)
+- **종료 함수**: 리소스 정리 (FinalizeAll)
+- **메인 루프**: 
+  - 사용자 입력 처리
+  - 카메라 프레임 획득
+  - 바디 트래킹 (스켈레톤 추출 및 처리)
+  - 포인트 클라우드 생성 및 처리
+  - 2D/3D 시각화
 
 </details>

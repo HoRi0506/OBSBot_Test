@@ -9,7 +9,7 @@ from collections import deque
 from ultralytics import YOLO
 
 # pyorbbecsdk 설치 경로 추가
-sys.path.append("C:/project/pyorbbecsdk/install/lib")
+sys.path.append("C:/clone/pyorbbecsdk/install/lib")
 from pyorbbecsdk import Pipeline, Config, OBSensorType
 
 # YOLO pose 모델 로드 (사람 스켈레톤 용)
